@@ -7,7 +7,7 @@ Replicates the full Cowork skill logic:
   Ã¢ÂÂ¢ AppSheet order fetch Ã¢ÂÂ Saturday FM filter Ã¢ÂÂ WFM pickup filter
   Ã¢ÂÂ¢ Address fallback (geocache Ã¢ÂÂ client table Ã¢ÂÂ Claude API)
   Ã¢ÂÂ¢ Google Geocoding API (cached in data/hrh-geocode-cache.json)
-  Ã¢ÂÂ¢ GMPRO route optimization with JWT auth
+  Ã¢ÂÂ¢ GMPRO route optimization with JW auth
   Ã¢ÂÂ¢ Westport canonical loop ordering
   Ã¢ÂÂ¢ Thursday farm-unload stop (Taner only)
   Ã¢ÂÂ¢ Brooklawn Country Club 1pm departure override
@@ -930,8 +930,7 @@ def main():
             for p in reversed(wfm_pickups):
                 ordered_stops.insert(wfm_i + 1, {
                     "num": wfm_num, "name": f"{p['name']} (pickup @ WFM)",
-                    "orderNum": None, "addr": "", "lat": 0, "lng": 0,
-                    "arrive": ordered_stops[wfm_i]["arrive"],
+                    "orderNum": None, "addr": ordered_stops[wfm_i]["addr"], "lat": ordered_stops[wfm_i]["lat"], "lng": ordered_stops[wfm_i]["lng"],                    "arrive": ordered_stops[wfm_i]["arrive"],
                     "depart": ordered_stops[wfm_i]["depart"],
                     "id": p["id"], "rowNum": p["rowNum"],
                     "warn": False, "constraint": None,
@@ -948,8 +947,7 @@ def main():
             for p in reversed(fm_pickups):
                 ordered_stops.insert(nc_i + 1, {
                     "num": nc_num, "name": f"{p['name']} (pickup @ New Canaan FM)",
-                    "orderNum": None, "addr": "", "lat": 0, "lng": 0,
-                    "arrive": ordered_stops[nc_i]["arrive"],
+                        "orderNum": None, "addr": ordered_stops[nc_i]["addr"], "lat": ordered_stops[nc_i]["lat"], "lng": ordered_stops[nc_i]["lng"],                    "arrive": ordered_stops[nc_i]["arrive"],
                     "depart": ordered_stops[nc_i]["depart"],
                     "id": p["id"], "rowNum": p["rowNum"],
                     "warn": False, "constraint": None,
