@@ -1,1 +1,81 @@
-Add .github/workflows/daily_route.yml
+# HRH Daily Route Optimizer
+#
+# Runs every day at 3 PM EDT (7 PM UTC, Mon-Sat).
+# NOTE: In winter (EST), 7 PM UTC = 2 PM ET - adjust the cron hour to 20
+#       (8 PM UTC) from November through March if you prefer 3 PM year-round.
+#
+# Manual trigger: Actions tab -> "Daily Route Optimizer" -> "Run workflow"
+# Force re-run (if dashboard already exists): set FORCE_RUN=1 in the workflow_dispatch inputs
+#
+# Required Secrets (Settings -> Secrets and variables -> Actions -> New repository secret):
+#   APPSHEET_APP_ID      bea55701-8006-4581-a791-19a75092943f
+#   APPSHEET_API_KEY     V2-f4zl4-pDmwB-IZ9zh-t6ari-vPhJu-FmAwJ-WQ46U-LIUqO
+#   DELIVERY_APP_ID      f57f33e9-2515-46d3-8394-168d7e834ded
+#   DELIVERY_API_KEY     V2-pFgDb-yYzyx-qffc2-gm2Nd-6hoHq-cjOXi-i3CQt-nRkVZ
+#   GMAP_API_KEY         AIzaSyB3Q0zYJdBfi2gmkETa7z7cWqrntPkHN7A
+#   GCP_SA_KEY_JSON      (paste the full contents of hrh-route-optimizer-*.json here)
+#   ANTHROPIC_API_KEY    (optional - enables Claude address-lookup fallback)
+#   EMAIL_USER           highridgehydroponics@gmail.com
+#   EMAIL_PASSWORD       (Gmail App Password - NOT your account password)
+#                        Generate at: myaccount.google.com/apppasswords
+
+name: Daily Route Optimizer
+
+on:
+  schedule:
+    - cron: "0 19 * * 1-6"   # 3 PM EDT (Mon-Sat); adjust to 20 for EST in winter
+
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: "Force re-run even if dashboard already exists for tomorrow"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+permissions:
+  contents: write   # needed to commit docs/ and data/ back to the repo
+
+jobs:
+  optimize-route:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run route optimizer
+        env:
+          APPSHEET_APP_ID:   ${{ secrets.APPSHEET_APP_ID }}
+          APPSHEET_API_KEY:  ${{ secrets.APPSHEET_API_KEY }}
+          DELIVERY_APP_ID:   ${{ secrets.DELIVERY_APP_ID }}
+          DELIVERY_API_KEY:  ${{ secrets.DELIVERY_API_KEY }}
+          GMAP_API_KEY:      ${{ secrets.GMAP_API_KEY }}
+          GCP_SA_KEY_JSON:   ${{ secrets.GCP_SA_KEY_JSON }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          EMAIL_USER:        ${{ secrets.EMAIL_USER }}
+          EMAIL_PASSWORD:    ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO:          highridgehydroponics@gmail.com
+          GITHUB_PAGES_URL:  "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          FORCE_RUN:         ${{ github.event.inputs.force_run || 'false' }}
+        run: python route_optimizer.py
+
+      - name: Commit updated dashboard and data
+        run: |
+          git config --global user.name  "Route Optimizer Bot"
+          git config --global user.email "route-bot@highridgehydroponics.com"
+          git add docs/ data/
+          git diff --staged --quiet || git commit -m "Route: $(date -u +'%Y-%m-%d') auto-run"
+          git push
