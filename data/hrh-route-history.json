@@ -1,1 +1,13 @@
-{"routes": []}
+{
+  "routes": [
+    {
+      "date": "05/28/2026",
+      "day_of_week": "Thursday",
+      "driver": "Taner Genc",
+      "driver_slug": "taner",
+      "depart_time": "1:00 PM",
+      "stops": 9,
+      "miles": 0.0
+    }
+  ]
+}

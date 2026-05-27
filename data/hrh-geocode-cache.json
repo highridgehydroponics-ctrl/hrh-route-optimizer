@@ -1,1 +1,59 @@
-{"addresses": {}, "customers": {}}
+{
+  "addresses": {
+    "1 1/2 Island Brook Ave, Bridgeport, CT 06606": {
+      "lat": 41.1979603,
+      "lng": -73.1872799
+    },
+    "179 Davis St, Oakville, CT 06779": {
+      "lat": 41.5843296,
+      "lng": -73.0886623
+    },
+    "50 Imperial Ave, Westport, CT 06880, USA": {
+      "lat": 41.137884,
+      "lng": -73.360362
+    },
+    "105 Church Hill Rd, Sandy Hook, CT 06482, USA": {
+      "lat": 41.4200775,
+      "lng": -73.28414889999999
+    },
+    "68 Stony Hill Rd, Bethel, CT 06801, USA": {
+      "lat": 41.4152323,
+      "lng": -73.3815195
+    },
+    "41 Bateman Way, Stamford, CT 06902, USA": {
+      "lat": 41.0368628,
+      "lng": -73.5424015
+    },
+    "19 Main St, Newtown, CT 06470, USA": {
+      "lat": 41.4115129,
+      "lng": -73.30798229999999
+    },
+    "811 Bridgeport Ave, Shelton, CT 06484, USA": {
+      "lat": 41.2704783,
+      "lng": -73.1287626
+    },
+    "32 Church Hill Rd, Newtown, CT 06470, USA": {
+      "lat": 41.4141911,
+      "lng": -73.2995705
+    },
+    "500 Algonquin Rd, Fairfield, CT 06825, USA": {
+      "lat": 41.1867744,
+      "lng": -73.2258368
+    },
+    "2992 Fairfield Ave, Bridgeport, CT 06605, USA": {
+      "lat": 41.1561025,
+      "lng": -73.2287475
+    }
+  },
+  "customers": {
+    "Westport Farmers Market": "50 Imperial Ave, Westport, CT 06880, USA",
+    "Sugo Gastrobar": "105 Church Hill Rd, Sandy Hook, CT 06482, USA",
+    "Bora Restaurant": "68 Stony Hill Rd, Bethel, CT 06801, USA",
+    "Ponus Yacht Club": "41 Bateman Way, Stamford, CT 06902, USA",
+    "Marygold\"s on Main": "19 Main St, Newtown, CT 06470, USA",
+    "Marketplace Shelton": "811 Bridgeport Ave, Shelton, CT 06484, USA",
+    "Marketplace Newtown": "32 Church Hill Rd, Newtown, CT 06470, USA",
+    "Brooklawn Country Club": "500 Algonquin Rd, Fairfield, CT 06825, USA",
+    "The Tasty Yolk BPT": "2992 Fairfield Ave, Bridgeport, CT 06605, USA"
+  }
+}

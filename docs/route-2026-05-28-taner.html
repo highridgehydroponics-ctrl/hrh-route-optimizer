@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRH Route Dashboard</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #1a1d23; color: #e2e8f0; font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow: hidden; }
+header { background: #0e1014; border-bottom: 2px solid #f59e0b; padding: 0 18px; height: 50px; display: flex; align-items: center; gap: 12px; }
+.logo { font-family:'JetBrains Mono',monospace; font-size:13px; color:#f59e0b; font-weight:700; letter-spacing:2px; flex-shrink:0; }
+.header-label { font-size:12px; color:#94a3b8; font-weight:500; }
+.header-driver-wrap { display:flex; align-items:center; gap:8px; }
+.driver-select { font-size:14px; font-weight:700; color:#ffffff; background:#1e2128; border:1px solid #374151; border-radius:5px; padding:3px 28px 3px 10px; font-family:'DM Sans',sans-serif; outline:none; cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23f59e0b'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 8px center; }
+.driver-select:focus { border-color:#f59e0b; }
+.driver-select:hover { border-color:#f59e0b; color:#fcd34d; }
+.header-date { font-family:'JetBrains Mono',monospace; font-size:10px; color:#64748b; background:#1e2128; border:1px solid #2a2d35; padding:2px 8px; border-radius:3px; }
+.header-spacer { flex:1; }
+.hdr-btn { display:flex; align-items:center; gap:5px; padding:6px 12px; border-radius:5px; font-size:12px; font-weight:600; font-family:'DM Sans',sans-serif; cursor:pointer; border:none; transition:all .15s; white-space:nowrap; }
+.hdr-btn.ghost { background:#1e2128; color:#cbd5e1; border:1px solid #2a2d35; }
+.hdr-btn.ghost:hover { background:#2a2d35; color:#ffffff; }
+.hdr-btn.amber { background:#92400e; color:#fcd34d; }
+.hdr-btn.amber:hover { background:#b45309; }
+.hdr-btn.blue { background:#1d4ed8; color:#ffffff; }
+.hdr-btn.blue:hover { background:#2563eb; box-shadow:0 2px 8px rgba(29,78,216,.4); }
+.spin { display:none; width:13px; height:13px; border:2px solid #374151; border-top-color:#f59e0b; border-radius:50%; animation:spin .6s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.stats-bar { background:#0e1014; border-bottom:1px solid #1e2128; display:grid; grid-template-columns:1fr 1fr 1fr 1fr; }
+.stat-card { padding:10px 18px; border-right:1px solid #1e2128; }
+.stat-card:last-child { border-right:none; }
+.stat-label { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#cbd5e1; font-weight:700; margin-bottom:4px; font-family:'JetBrains Mono',monospace; }
+.stat-value { font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:700; color:#f59e0b; line-height:1; }
+.stat-sub { font-size:12px; color:#94a3b8; font-weight:600; margin-top:4px; }
+.stat-note { font-size:10px; color:#64748b; margin-top:3px; font-style:italic; }
+.depart-input { font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:700; color:#f59e0b; background:transparent; border:none; outline:none; width:120px; border-bottom:1px dashed #374151; }
+.depart-input:focus { border-bottom-color:#f59e0b; }
+.approve-section { padding:10px 12px 12px; border-top:1px solid #1e2128; position:fixed; bottom:0; right:0; width:50%; background:#0e1014; z-index:1000; box-shadow:0 -2px 12px rgba(0,0,0,.6); }
+.approve-btn { width:100%; padding:13px; background:#059669; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:700; font-family:'DM Sans',sans-serif; cursor:pointer; transition:all .15s; letter-spacing:.3px; }
+.approve-btn:hover:not(:disabled) { background:#10b981; transform:translateY(-1px); box-shadow:0 4px 16px rgba(5,150,105,.4); }
+.approve-btn.approved { background:#0d2a1e; color:#34d399; border:1px solid #34d399; cursor:default; font-size:14px; }
+.approve-btn:disabled { opacity:.7; cursor:default; transform:none !important; box-shadow:none !important; }
+.main { display:grid; grid-template-columns:1fr 1fr; height:calc(100vh - 50px - 57px - 46px); }
+#map { width:100%; height:100%; }
+.leaflet-popup-content-wrapper { background:#1e2128; border:1px solid #f59e0b; border-radius:8px; color:#e2e8f0; font-family:'DM Sans',sans-serif; }
+.leaflet-popup-tip { background:#f59e0b; }
+.leaflet-popup-content { margin:12px 16px; min-width:210px; }
+.popup-badge { font-family:'JetBrains Mono',monospace; font-size:10px; color:#f59e0b; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+.popup-name { font-weight:700; font-size:14px; color:#ffffff; margin-bottom:4px; }
+.popup-addr { font-size:11px; color:#94a3b8; margin-bottom:8px; }
+.popup-times { display:flex; gap:20px; margin-bottom:8px; }
+.popup-t { font-family:'JetBrains Mono',monospace; font-size:12px; color:#f59e0b; }
+.popup-t span { display:block; font-size:9px; color:#64748b; text-transform:uppercase; margin-bottom:1px; }
+.popup-leg { font-size:11px; color:#94a3b8; margin-bottom:8px; }
+.popup-constraint { font-size:11px; color:#fbbf24; margin-bottom:8px; font-weight:600; }
+.popup-rm { background:#7f1d1d; border:none; color:#fca5a5; font-size:11px; padding:5px 10px; border-radius:4px; cursor:pointer; width:100%; font-family:'DM Sans',sans-serif; font-weight:600; }
+.popup-rm:hover { background:#991b1b; }
+.sidebar { background:#0e1014; border-left:1px solid #1e2128; display:flex; flex-direction:column; overflow:hidden; }
+.warn-bar { background:#451a03; border-left:3px solid #f59e0b; padding:7px 12px; margin:8px 10px; border-radius:0 5px 5px 0; font-size:11px; color:#fcd34d; font-weight:600; }
+.table-wrap { flex:1; overflow-y:auto; min-height:0; padding-bottom:62px; }
+.table-wrap::-webkit-scrollbar { width:4px; }
+.table-wrap::-webkit-scrollbar-thumb { background:#2a2d35; border-radius:2px; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead th { background:#080a0d; color:#94a3b8; font-size:11px; text-transform:uppercase; letter-spacing:1px; padding:8px 8px; text-align:left; border-bottom:1px solid #1e2128; font-family:'JetBrains Mono',monospace; position:sticky; top:0; z-index:10; font-weight:700; }
+tbody tr.stop-row { cursor:grab; transition:background .1s; }
+tbody tr.stop-row:hover { background:#1e2128; }
+tbody tr.stop-row.is-start, tbody tr.stop-row.is-home { cursor:default; background:#080a0d; }
+
+tbody tr.leg-row td { padding:0; }
+.leg-cell { padding:4px 8px 4px 38px; background:#080a0d; border-bottom:1px solid #1a1d23; }
+.leg-inner { display:flex; align-items:center; gap:8px; font-size:11px; color:#64748b; font-family:'JetBrains Mono',monospace; }
+.leg-line { flex:1; height:1px; background:linear-gradient(to right, #f59e0b44, #f59e0b11); }
+.leg-dist { color:#cbd5e1; font-weight:700; }
+.leg-time { color:#94a3b8; font-weight:600; }
+tbody tr.constraint-row td { background:#080a0d; padding:5px 8px 7px 38px; }
+.ce-inner { display:flex; align-items:center; gap:7px; }
+.ce-label { font-size:10px; color:#94a3b8; font-family:'JetBrains Mono',monospace; white-space:nowrap; }
+.ce-input { background:#1e2128; border:1px solid #374151; color:#f59e0b; font-family:'JetBrains Mono',monospace; font-size:12px; padding:4px 8px; border-radius:4px; width:90px; outline:none; }
+.ce-input:focus { border-color:#f59e0b; }
+.ce-btn { padding:4px 9px; border-radius:4px; font-size:11px; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:700; }
+.ce-set { background:#92400e; color:#fcd34d; }
+.ce-clr { background:#1e2128; color:#94a3b8; border:1px solid #2a2d35; }
+td { padding:7px 8px; vertical-align:middle; border-bottom:1px solid #12151a; }
+td.td-num { font-family:'JetBrains Mono',monospace; font-weight:700; color:#f59e0b; width:32px; font-size:13px; cursor:pointer; user-select:none; }
+td.td-num:hover { color:#fbbf24; }
+.num-edit-input { width:34px; font-family:'JetBrains Mono',monospace; font-weight:700; color:#f59e0b; font-size:13px; background:#1e2128; border:1px solid #f59e0b; border-radius:3px; text-align:center; padding:1px 3px; outline:none; -moz-appearance:textfield; }
+.num-edit-input::-webkit-inner-spin-button { display:none; }
+td.td-num.start-num { color:#22c55e; font-size:11px; }
+td.td-num.home-num { color:#64748b; font-size:11px; }
+td.td-name { max-width:115px; }
+td.td-name .cname { font-weight:700; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:13px; }
+td.td-name .caddr { font-size:11px; color:#94a3b8; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:115px; }
+td.td-name .cbadge { display:inline-block; margin-top:2px; font-size:10px; background:#78350f; color:#fcd34d; padding:2px 6px; border-radius:3px; font-family:'JetBrains Mono',monospace; }
+td.td-name.warn-name .cname { color:#fbbf24; }
+td.td-name.start-name .cname { color:#86efac; }
+td.td-name.home-name .cname { color:#94a3b8; }
+td.td-time { font-family:'JetBrains Mono',monospace; font-size:12px; color:#cbd5e1; font-weight:600; width:56px; white-space:nowrap; }
+td.td-time .lbl { display:block; font-size:9px; color:#64748b; text-transform:uppercase; margin-bottom:1px; font-weight:700; }
+td.td-time.late { color:#ef4444; font-weight:700; }
+td.td-time.muted { color:#374151; }
+.icon-btn { background:none; border:none; cursor:pointer; padding:3px 5px; border-radius:4px; font-size:12px; color:#4b5563; transition:all .15s; line-height:1; }
+.icon-btn:hover { background:#1e2128; color:#e2e8f0; }
+.icon-btn.has-constraint { color:#f59e0b; }
+.icon-btn.rm:hover { color:#ef4444; }
+.add-section { padding:10px 10px 12px; border-bottom:1px solid #1e2128; background:#080a0d; }
+.section-label { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#ffffff; font-weight:700; margin-bottom:8px; font-family:'JetBrains Mono',monospace; }
+.add-row { display:flex; gap:8px; align-items:flex-end; }
+.add-col { flex:1; }
+.add-col label { display:block; font-size:11px; color:#ffffff; margin-bottom:4px; font-weight:700; }
+select.stop-select { width:100%; background:#1e2128; border:1px solid #2a2d35; color:#ffffff; padding:9px 12px; border-radius:5px; font-size:13px; font-family:'DM Sans',sans-serif; outline:none; cursor:pointer; appearance:none; font-weight:600; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23f59e0b'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; }
+select.stop-select:focus { border-color:#f59e0b; }
+.addr-preview { font-size:11px; color:#94a3b8; margin-top:5px; min-height:14px; font-family:'JetBrains Mono',monospace; font-weight:600; }
+.add-go { background:#92400e; border:none; color:#fcd34d; padding:9px 16px; border-radius:5px; cursor:pointer; font-size:14px; font-weight:700; white-space:nowrap; font-family:'DM Sans',sans-serif; }
+.add-go:hover { background:#b45309; }
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:1000; display:none; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal-box { background:#0e1014; border:1px solid #2a2d35; border-radius:10px; width:720px; max-width:95vw; max-height:82vh; display:flex; flex-direction:column; box-shadow:0 25px 60px rgba(0,0,0,.7); }
+/* Compare drawer — slides in from right over the sidebar, map stays fully visible */
+#cmp-modal { background:none; pointer-events:none; display:block; opacity:0; transition:opacity .2s; }
+#cmp-modal.open { opacity:1; pointer-events:auto; }
+.cmp-drawer { position:fixed; top:50px; right:0; width:440px; height:calc(100vh - 50px); background:#0e1014; border-left:2px solid #2a2d35; display:flex; flex-direction:column; z-index:1000; transform:translateX(100%); transition:transform .25s cubic-bezier(.4,0,.2,1); box-shadow:-8px 0 32px rgba(0,0,0,.6); pointer-events:auto; }
+#cmp-modal.open .cmp-drawer { transform:translateX(0); }
+.cmp-drawer-head { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid #1e2128; flex-shrink:0; }
+.cmp-drawer-title { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#f59e0b; text-transform:uppercase; letter-spacing:1px; }
+.cmp-drawer-body { flex:1; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:12px; }
+.cmp-drawer-body::-webkit-scrollbar { width:4px; }
+.cmp-drawer-body::-webkit-scrollbar-thumb { background:#2a2d35; border-radius:2px; }
+.cmp-drawer-foot { padding:10px 16px; border-top:1px solid #1e2128; flex-shrink:0; }
+.modal-header { padding:16px 20px; border-bottom:1px solid #1e2128; display:flex; align-items:center; gap:12px; }
+.modal-header h2 { font-size:15px; font-weight:700; color:#ffffff; flex:1; }
+.modal-close { background:none; border:none; color:#64748b; font-size:20px; cursor:pointer; padding:2px 6px; border-radius:4px; }
+.modal-close:hover { background:#1e2128; color:#ffffff; }
+.modal-body { overflow-y:auto; flex:1; }
+.modal-body::-webkit-scrollbar { width:4px; }
+.modal-body::-webkit-scrollbar-thumb { background:#2a2d35; border-radius:2px; }
+.cache-table { width:100%; border-collapse:collapse; font-size:12px; }
+.cache-table thead th { background:#080a0d; color:#64748b; font-size:9px; text-transform:uppercase; letter-spacing:1px; padding:10px 16px; text-align:left; border-bottom:1px solid #1e2128; font-family:'JetBrains Mono',monospace; position:sticky; top:0; }
+.cache-table tbody tr { border-bottom:1px solid #12151a; }
+.cache-table tbody tr:hover { background:#1e2128; }
+.cache-table td { padding:10px 16px; }
+.cache-table td.ct-name { font-weight:700; color:#ffffff; }
+.cache-table td.ct-addr { color:#e2e8f0; }
+.cache-table td.ct-coord { font-family:'JetBrains Mono',monospace; font-size:12px; color:#94a3b8; }
+.cache-table td.ct-action { text-align:right; }
+.cache-add-btn { background:#1e2128; border:1px solid #2a2d35; color:#cbd5e1; padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:600; white-space:nowrap; }
+.cache-add-btn:hover { background:#92400e; color:#fcd34d; border-color:#92400e; }
+.cache-add-btn.already { color:#64748b; border-color:#2a2d35; cursor:default; }
+.cache-add-btn.already:hover { background:#1e2128; color:#64748b; border-color:#2a2d35; }
+.modal-footer { padding:10px 20px; border-top:1px solid #1e2128; font-size:11px; color:#94a3b8; font-family:'JetBrains Mono',monospace; }
+.toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(60px); background:#1e2128; border:1px solid #374151; border-radius:6px; padding:8px 16px; font-size:12px; color:#e2e8f0; z-index:2000; transition:transform .3s; pointer-events:none; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+.toast.green { border-color:#22c55e; color:#86efac; }
+.toast.amber { border-color:#f59e0b; color:#fcd34d; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">HRH</div>
+  <div class="header-label">Driver —</div>
+  <div class="header-driver-wrap">
+    <select class="driver-select" id="driver-select" onchange="onDriverChange()">
+      <option value="0">Rene Jimenez</option>
+      <option value="1">Joe Alvarez</option>
+      <option value="2">Taner Genc</option>
+    </select>
+  </div>
+  <div class="header-date" id="header-date">THU MAY 28 Â· 9 STOPS</div>
+  <div class="header-spacer"></div>
+  <a class="hdr-btn blue" id="dir-btn" href="#" target="_blank" rel="noopener">🗺️ &nbsp;Directions</a>
+  <button class="hdr-btn ghost" id="copy-link-btn" onclick="copyMapsLink()" title="Copy Maps link to clipboard">📋 &nbsp;Copy Link</button>
+  <button class="hdr-btn ghost" onclick="openGeocache()">🗄️ &nbsp;Geocache</button>
+  <button class="hdr-btn ghost" id="opt-btn" onclick="runOptimize()">⚡ &nbsp;Optimize</button>
+  <button class="hdr-btn ghost" onclick="reorderStops()">🔀 &nbsp;Reorder</button>
+  <button class="hdr-btn ghost" onclick="runCompare()">👥 &nbsp;Compare</button>
+  <button class="hdr-btn amber" id="refresh-btn" onclick="doRefresh()">
+    <span id="spin-el" class="spin"></span>↻ &nbsp;Refresh
+  </button>
+</header>
+
+<div class="stats-bar">
+  <div class="stat-card">
+    <div class="stat-label">🕐 Route Duration</div>
+    <div class="stat-value" id="stat-time">1h 48m</div>
+    <div class="stat-sub">driving + 5 min/stop</div>
+    <div class="stat-note" id="traffic-note">est. · no live traffic</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">📏 Est. Miles</div>
+    <div class="stat-value" id="stat-miles">41.9</div>
+    <div class="stat-sub">total distance</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">🚗 Depart Farm</div>
+    <input class="depart-input" id="depart-input" value="1:00 PM" title="Edit then click Refresh">
+    <div class="stat-sub">edit → click Refresh</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">🏁 Est. Home Arrival</div>
+    <div class="stat-value" id="stat-home">5:48 PM</div>
+    <div class="stat-sub" id="home-driver">Norwalk</div>
+  </div>
+</div>
+
+</div>
+
+<div class="main">
+  <div id="map"></div>
+
+  <div class="sidebar">
+    <div class="add-section">
+      <div class="section-label" id="add-stop-label">+ Add Stop (loading orders…)</div>
+      <div class="add-row">
+        <div class="add-col">
+          <select class="stop-select" id="stop-select" onchange="onSelectChange()">
+            <option value="">— Select customer to add —</option>
+          </select>
+          <div class="addr-preview" id="addr-preview"></div>
+        </div>
+        <button class="add-go" onclick="addStop()">+ Add</button>
+      </div>
+    </div>
+
+    <div class="warn-bar" id="warn-bar" style="display:none">⚠️ Time constraint violated</div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Customer / Address</th>
+            <th>Arrive</th>
+            <th>Dep.</th>
+            <th>⏰</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="stop-tbody"></tbody>
+      </table>
+    </div>
+
+<div class="approve-section">
+      <button class="approve-btn" id="approve-btn" onclick="approveRoute()">✅ Approve Route</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="geocache-modal" onclick="if(event.target===this)closeGeocache()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#f59e0b">🗄️</div>
+      <h2>Geocache — All Saved Addresses</h2>
+      <button class="modal-close" onclick="closeGeocache()">✕</button>
+    </div>
+    <div class="modal-body">
+      <table class="cache-table">
+        <thead><tr><th>Customer</th><th>Address</th><th>Coordinates</th><th></th></tr></thead>
+        <tbody id="cache-tbody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer" id="cache-footer"></div>
+  </div>
+</div>
+
+<!-- ── OPTIMIZE MODAL ── -->
+<div class="modal-overlay" id="opt-modal" onclick="if(event.target===this)closeOpt()">
+  <div class="modal-box" style="width:560px;max-width:95vw">
+    <div class="modal-header">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#f59e0b">⚡</div>
+      <h2>Find Optimal Departure Time</h2>
+      <button class="modal-close" onclick="closeOpt()">✕</button>
+    </div>
+    <div class="modal-body" id="opt-body" style="padding:20px 20px 8px"></div>
+    <div class="modal-footer" style="display:flex;gap:10px;justify-content:flex-end;padding:12px 20px;border-top:1px solid #1e2128" id="opt-footer"></div>
+  </div>
+</div>
+
+<!-- ── COMPARE DRIVERS MODAL ── -->
+<div id="cmp-modal">
+  <div class="cmp-drawer">
+    <div class="cmp-drawer-head">
+      <span class="cmp-drawer-title">&#x1F465; Compare Drivers</span>
+      <button class="modal-close" onclick="closeCmp()">&#x2715;</button>
+    </div>
+    <div id="cmp-body" class="cmp-drawer-body"></div>
+    <div id="cmp-footer" class="cmp-drawer-foot" style="display:flex;justify-content:flex-end"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API_KEY = "AIzaSyB3Q0zYJdBfi2gmkETa7z7cWqrntPkHN7A";
+const APPSHEET_APP_ID   = 'bea55701-8006-4581-a791-19a75092943f';   // Orders app
+const APPSHEET_API_KEY  = 'V2-f4zl4-pDmwB-IZ9zh-t6ari-vPhJu-FmAwJ-WQ46U-LIUqO';  // Orders app key
+const DELIVERY_APP_ID   = 'f57f33e9-2515-46d3-8394-168d7e834ded';   // Deliveries app
+const DELIVERY_API_KEY  = 'V2-pFgDb-yYzyx-qffc2-gm2Nd-6hoHq-cjOXi-i3CQt-nRkVZ';  // Deliveries app key
+const STOP_NUM_OFFSET  = 0; // 0=Taner, 100=Rene, 200=Joe
+const DATE_PART  = 'THU MAY 28 Â· 9 STOPS'; // date portion of header label
+const ROUTE_DATE = '05/28/2026'; // MM/DD/YYYY — delivery date for this route
+
+const DRIVERS = [
+  { name: "Rene Jimenez", addr: "207 Liberty Square, Norwalk, CT 06854",  lat: 41.1000683, lng: -73.4124502 },
+  { name: "Joe Alvarez",  addr: "1 Brookwood Dr, Newtown, CT 06470",      lat: 41.4132,   lng: -73.3021   },
+  { name: "Taner Genc",        addr: "179 Davis St, Oakville, CT 06779",       lat: 41.5901,   lng: -73.0795   },
+];
+
+const cacheData = {"addresses": {"1 1/2 Island Brook Ave, Bridgeport, CT 06606": {"lat": 41.1979603, "lng": -73.1872799}, "179 Davis St, Oakville, CT 06779": {"lat": 41.5843296, "lng": -73.0886623}, "50 Imperial Ave, Westport, CT 06880, USA": {"lat": 41.137884, "lng": -73.360362}, "105 Church Hill Rd, Sandy Hook, CT 06482, USA": {"lat": 41.4200775, "lng": -73.28414889999999}, "68 Stony Hill Rd, Bethel, CT 06801, USA": {"lat": 41.4152323, "lng": -73.3815195}, "41 Bateman Way, Stamford, CT 06902, USA": {"lat": 41.0368628, "lng": -73.5424015}, "19 Main St, Newtown, CT 06470, USA": {"lat": 41.4115129, "lng": -73.30798229999999}, "811 Bridgeport Ave, Shelton, CT 06484, USA": {"lat": 41.2704783, "lng": -73.1287626}, "32 Church Hill Rd, Newtown, CT 06470, USA": {"lat": 41.4141911, "lng": -73.2995705}, "500 Algonquin Rd, Fairfield, CT 06825, USA": {"lat": 41.1867744, "lng": -73.2258368}, "2992 Fairfield Ave, Bridgeport, CT 06605, USA": {"lat": 41.1561025, "lng": -73.2287475}}, "customers": {"Westport Farmers Market": "50 Imperial Ave, Westport, CT 06880, USA", "Sugo Gastrobar": "105 Church Hill Rd, Sandy Hook, CT 06482, USA", "Bora Restaurant": "68 Stony Hill Rd, Bethel, CT 06801, USA", "Ponus Yacht Club": "41 Bateman Way, Stamford, CT 06902, USA", "Marygold\"s on Main": "19 Main St, Newtown, CT 06470, USA", "Marketplace Shelton": "811 Bridgeport Ave, Shelton, CT 06484, USA", "Marketplace Newtown": "32 Church Hill Rd, Newtown, CT 06470, USA", "Brooklawn Country Club": "500 Algonquin Rd, Fairfield, CT 06825, USA", "The Tasty Yolk BPT": "2992 Fairfield Ave, Bridgeport, CT 06605, USA"}};
+
+const addrToName = {};
+Object.entries(cacheData.customers).forEach(([name, addr]) => {
+  addrToName[addr] = name;
+  const loose = addr.replace(/,?\s*USA\s*$/i, '').trim();
+  if (loose !== addr) addrToName[loose] = name;
+});
+const geocache = Object.entries(cacheData.addresses).map(([addr, coords]) => ({
+  name: addrToName[addr] || addrToName[addr.replace(/,?\s*USA\s*$/i, '').trim()] || addr,
+  addr, lat: coords.lat, lng: coords.lng
+}));
+const removedStopNames = {};
+// Customers who have a Delivery order on ROUTE_DATE — fetched from AppSheet on page load.
+// Only these will appear in the Add Stop dropdown (minus any already on the route).
+let todayOrderCustomers = new Set(); // lowercased client_name values
+let todayOrderAddresses = new Set(); // client_address values (raw)
+let todayOrdersLoaded = false;
+
+async function fetchTodayOrders() {
+  try {
+    const url = `https://api.appsheet.com/api/v2/apps/${APPSHEET_APP_ID}/tables/order/Action`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'ApplicationAccessKey': APPSHEET_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        Action: 'Find',
+        Properties: { Locale: 'en-US', Timezone: 'US/Eastern',
+          Selector: `FILTER(order, AND([fulfillment_date] = "${ROUTE_DATE}", [pickup_or_delivery] = "Delivery"))` },
+        Rows: []
+      })
+    });
+    const text = await res.text();
+    if (text && text.trim()) {
+      JSON.parse(text).forEach(o => {
+        if (o.client_name) todayOrderCustomers.add(o.client_name.toLowerCase().trim());
+        if (o.client_address && o.client_address.trim()) todayOrderAddresses.add(o.client_address.trim());
+      });
+    }
+  } catch(e) { console.warn('fetchTodayOrders failed:', e); }
+  todayOrdersLoaded = true;
+  buildDropdown();
+}
+
+const FIXED_NAMES = new Set([
+  "Farm (HRH)", "Farm (Start)",
+  ...DRIVERS.map(d => d.name),
+  ...DRIVERS.map(d => `${d.name} (Home)`),
+  "Rene Jimenez (Home)", "Rene's Home"
+]);
+
+const farm = { name:"Farm (Start)", addr:"1 1/2 Island Brook Ave, Bridgeport, CT 06606", lat:41.1979603, lng:-73.1872799 };
+
+let currentDriverIdx = 2;
+let driverName = DRIVERS[currentDriverIdx].name;
+let homeBase = { name:`${DRIVERS[currentDriverIdx].name} (Home)`, addr: DRIVERS[currentDriverIdx].addr, lat: DRIVERS[currentDriverIdx].lat, lng: DRIVERS[currentDriverIdx].lng };
+let departMinutes = 780;
+let homeArrivalMins = 1093;
+let totalMilesGlobal = 0.0;
+
+let stops = [{"num": 0, "name": "Farm â Unload", "orderNum": "â", "addr": "1 1/2 Island Brook Ave, Bridgeport, CT 06606", "lat": 41.1979603, "lng": -73.1872799, "arrive": "1:00 PM", "depart": "1:05 PM", "warn": false, "constraint": null, "constOpen": false, "id": ""}, {"num": 1, "name": "Marketplace Shelton", "orderNum": null, "addr": "811 Bridgeport Ave, Shelton, CT 06484, USA", "lat": 41.2704783, "lng": -73.1287626, "arrive": "1:18 PM", "depart": "1:23 PM", "warn": false, "constraint": null, "constOpen": false, "id": "24dfd61f"}, {"num": 2, "name": "Brooklawn Country Club", "orderNum": null, "addr": "500 Algonquin Rd, Fairfield, CT 06825, USA", "lat": 41.1867744, "lng": -73.2258368, "arrive": "1:42 PM", "depart": "1:47 PM", "warn": false, "constraint": null, "constOpen": false, "id": "981ac8d1"}, {"num": 3, "name": "The Tasty Yolk BPT", "orderNum": null, "addr": "2992 Fairfield Ave, Bridgeport, CT 06605, USA", "lat": 41.1561025, "lng": -73.2287475, "arrive": "1:57 PM", "depart": "2:02 PM", "warn": false, "constraint": null, "constOpen": false, "id": "cc20a440"}, {"num": 4, "name": "Ponus Yacht Club", "orderNum": null, "addr": "41 Bateman Way, Stamford, CT 06902, USA", "lat": 41.0368628, "lng": -73.5424015, "arrive": "2:33 PM", "depart": "2:38 PM", "warn": false, "constraint": null, "constOpen": false, "id": "65af3505"}, {"num": 5, "name": "Westport Farmers Market", "orderNum": null, "addr": "50 Imperial Ave, Westport, CT 06880, USA", "lat": 41.137884, "lng": -73.360362, "arrive": "3:07 PM", "depart": "8:37 PM", "warn": false, "constraint": null, "constOpen": false, "id": "19cd39d3"}, {"num": 5, "name": "The Cottage (pickup @ WFM)", "orderNum": null, "addr": "", "lat": 0, "lng": 0, "arrive": "3:07 PM", "depart": "8:37 PM", "warn": false, "constraint": null, "constOpen": false, "id": "46b0f078"}, {"num": 5, "name": "Herbaceous Catering (pickup @ WFM)", "orderNum": null, "addr": "", "lat": 0, "lng": 0, "arrive": "3:07 PM", "depart": "8:37 PM", "warn": false, "constraint": null, "constOpen": false, "id": "54f8e686"}, {"num": 6, "name": "Bora Restaurant", "orderNum": null, "addr": "68 Stony Hill Rd, Bethel, CT 06801, USA", "lat": 41.4152323, "lng": -73.3815195, "arrive": "4:21 PM", "depart": "4:26 PM", "warn": false, "constraint": null, "constOpen": false, "id": "013b0f33"}, {"num": 7, "name": "Marygold\"s on Main", "orderNum": null, "addr": "19 Main St, Newtown, CT 06470, USA", "lat": 41.4115129, "lng": -73.30798229999999, "arrive": "4:36 PM", "depart": "4:41 PM", "warn": false, "constraint": null, "constOpen": false, "id": "81dc962e"}, {"num": 8, "name": "Marketplace Newtown", "orderNum": null, "addr": "32 Church Hill Rd, Newtown, CT 06470, USA", "lat": 41.4141911, "lng": -73.2995705, "arrive": "4:43 PM", "depart": "4:48 PM", "warn": false, "constraint": null, "constOpen": false, "id": "ba15e2d4"}, {"num": 9, "name": "Sugo Gastrobar", "orderNum": null, "addr": "105 Church Hill Rd, Sandy Hook, CT 06482, USA", "lat": 41.4200775, "lng": -73.28414889999999, "arrive": "4:52 PM", "depart": "4:57 PM", "warn": false, "constraint": null, "constOpen": false, "id": "9f485780"}];
+
+let legs = [];
+let roadPolylinePoints = null;
+let homeConstraint = "6:00 PM";   // "arrive home by" time string — default 6:00 PM for all drivers
+let homeWarn = false;        // true if estimated home arrival exceeds constraint
+let homeConstOpen = false;
+let homeVisible = true;   // set false when user deletes home row
+let cmpLayers = [];  // compare-mode map layers   // constraint editor open
+
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 3958.8;
+  const dLat = (lat2-lat1)*Math.PI/180, dLng = (lng2-lng1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function estimateDriveMins(miles) { return (miles * 1.3 / 33) * 60; }
+function minsToTime(m) {
+  const h24 = Math.floor(m/60)%24, mm = Math.round(m%60);
+  const h12 = h24%12||12, ap = h24<12?'AM':'PM';
+  return `${h12}:${String(mm).padStart(2,'0')} ${ap}`;
+}
+function timeToMins(str) {
+  if (!str) return null;
+  const clean = str.trim().replace(/\./g,'');
+  const m = clean.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i) || clean.match(/^(\d{1,2})(am|pm)$/i);
+  if (!m) return null;
+  let h = parseInt(m[1]), mn = m[3] ? parseInt(m[2]) : 0;
+  const ap = (m[3]||m[2]).toUpperCase();
+  if (ap==='AM' && h===12) h=0;
+  if (ap==='PM' && h!==12) h+=12;
+  return h*60+mn;
+}
+
+function computeLegs() {
+  const pts = homeVisible ? [farm, ...stops, homeBase] : [farm, ...stops];
+  legs = [];
+  for (let i=0; i<pts.length-1; i++) {
+    const dist = haversine(pts[i].lat, pts[i].lng, pts[i+1].lat, pts[i+1].lng);
+    legs.push({ distMiles: dist, driveMins: estimateDriveMins(dist) });
+  }
+}
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent=msg; t.className='toast show '+type;
+  setTimeout(()=>t.className='toast',2800);
+}
+function renumber() { stops.forEach((s,i)=>s.num=STOP_NUM_OFFSET+i+1); }
+
+function buildMapsUrl() {
+  const pts = homeVisible ? [farm, ...stops, homeBase] : [farm, ...stops];
+  return 'https://www.google.com/maps/dir/' + pts.map(p=>encodeURIComponent(p.addr)).join('/');
+}
+
+function copyMapsLink() {
+  const url = buildMapsUrl();
+  const btn = document.getElementById('copy-link-btn');
+  const reset = () => { btn.textContent = '📋 Copy Link'; btn.classList.remove('copied'); };
+  navigator.clipboard.writeText(url).then(() => {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    showToast('📋 Maps link copied — paste it to the driver', 'green');
+    setTimeout(reset, 2500);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = url; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = '✓ Copied!'; btn.classList.add('copied');
+    showToast('📋 Maps link copied — paste it to the driver', 'green');
+    setTimeout(reset, 2500);
+  });
+}
+
+let routeApproved = false;
+
+let _approveStep = 0;
+function approveRoute() {
+  if (routeApproved) return;
+  const btn = document.getElementById('approve-btn');
+  if (_approveStep === 0) {
+    btn.textContent = '⚠️ Confirm? Tap again to update AppSheet';
+    btn.style.background = '#b45309';
+    _approveStep = 1;
+    setTimeout(() => {
+      if (_approveStep === 1) {
+        btn.textContent = '✅ Approve Route';
+        btn.style.background = '';
+        _approveStep = 0;
+      }
+    }, 4000);
+    return;
+  }
+  _approveStep = 0;
+  routeApproved = true;
+  btn.textContent = '✅ Route Approved for ' + driverName;
+  btn.classList.add('approved');
+  btn.disabled = true;
+  showToast('✅ Route approved — updating AppSheet...', 'green');
+  updateAppSheet();
+}
+
+function markRouteModified() {
+  routeApproved = false;
+  const btn = document.getElementById('approve-btn');
+  if (btn) {
+    btn.textContent = '🔄 Re-approve Route';
+    btn.classList.remove('approved');
+    btn.disabled = false;
+    btn.classList.add('blue');
+  }
+}
+
+async function updateAppSheet() {
+  const API_URL = `https://api.appsheet.com/api/v2/apps/${APPSHEET_APP_ID}/tables/order/Action`;
+  const HEADERS = { 'ApplicationAccessKey': APPSHEET_API_KEY, 'Content-Type': 'application/json' };
+
+  showToast('🔄 Fetching AppSheet records...', 'amber');
+
+  try {
+    // Step 1: Find all records to build row lookup
+    const findResp = await fetch(API_URL, {
+      method: 'POST', headers: HEADERS,
+      body: JSON.stringify({ "Action": "Find", "Properties": { "Locale": "en-US" }, "Rows": [] })
+    });
+    if (!findResp.ok) throw new Error(`AppSheet Find failed: ${findResp.status}`);
+    const allRecords = await findResp.json();
+
+    // Build fast lookup: _RowNumber → record
+    const idMap = {};
+    allRecords.forEach(r => { idMap[r.id] = r; });
+
+    // Step 2: Match each stop by orderNum (AppSheet id), fall back to client_name + date
+    // Uses idMap only (not _RowNumber) to avoid matching old rows with same numeric id.
+    // Strips "(pickup @ XXXX)" suffix from name for fallback matching.
+    const editRows = [], unmatched = [], matchedStops = [];
+    stops.forEach((stop, idx) => {
+      const rawNum = stop.orderNum ? stop.orderNum.replace('#', '').trim() : null;
+      if (rawNum === '\u2014' || rawNum === '-') return; // skip explicitly-marked non-order stops (e.g. Farm — Unload)
+      // If orderNum is absent/null, fall through to name-matching below
+      const candidate = idMap[rawNum] || null;
+      // Validate date so we never accidentally match an old order with the same id fragment
+      const rec = (candidate && candidate.fulfillment_date === ROUTE_DATE) ? candidate : null;
+      if (rec) {
+        editRows.push({ "id": rec.id, "stop_number": String(STOP_NUM_OFFSET + idx + 1) });
+        matchedStops.push({ orderId: rec.id, sorter: idx + 1, name: stop.name });
+      } else {
+        const strippedName = stop.name.replace(/\s*\(pickup\s*@\s*\w+\)/i, '').trim();
+        const byName = allRecords.find(r =>
+          (r.client_name === stop.name || r.client_name === strippedName) &&
+          r.fulfillment_date === ROUTE_DATE
+        );
+        if (byName) {
+          editRows.push({ "id": byName.id, "stop_number": String(STOP_NUM_OFFSET + idx + 1) });
+          matchedStops.push({ orderId: byName.id, sorter: idx + 1, name: stop.name });
+        } else {
+          unmatched.push(stop.name);
+        }
+      }
+    });
+
+    if (editRows.length === 0) {
+      showToast('⚠️ No matching AppSheet records found for this route', 'amber');
+      return;
+    }
+
+    showToast(`📝 Writing ${editRows.length} stop numbers to AppSheet...`, 'amber');
+
+    // Step 3: Edit all matched records in one call
+    const editResp = await fetch(API_URL, {
+      method: 'POST', headers: HEADERS,
+      body: JSON.stringify({ "Action": "Edit", "Properties": { "Locale": "en-US" }, "Rows": editRows })
+    });
+    if (!editResp.ok) {
+      const errText = await editResp.text();
+      throw new Error(`AppSheet Edit failed: ${editResp.status} — ${errText}`);
+    }
+
+    showToast(`📝 Stop numbers saved — creating delivery record...`, 'amber');
+    if (unmatched.length > 0) {
+      setTimeout(() => showToast(`⚠️ ${unmatched.length} unmatched: ${unmatched.join(', ')}`, 'amber'), 2000);
+    }
+
+    // Step 4: Create delivery record
+    const deliveryResult = await createDeliveryRecord(ROUTE_DATE, minsToTime(departMinutes), driverName, matchedStops.map(s => s.orderId));
+    const btn = document.getElementById('approve-btn');
+
+    if (deliveryResult && deliveryResult.status === 200) {
+      showToast('📦 Delivery record created — adding delivery items...', 'amber');
+      // Step 5: Find the delivery ID and create delivery_item rows (one per stop)
+      const STAFF_IDS = { "Joe Alvarez": "4aa339f5", "Rene Jimenez": "9d3e9108", "Taner Genc": "68969327" };
+      const staffId = STAFF_IDS[driverName];
+      const deliveryId = await findDeliveryId(ROUTE_DATE, staffId);
+      const doItems = async (dId) => {
+        const itemsResult = await createDeliveryItems(dId, matchedStops);
+        if (itemsResult.status === 200) {
+          btn.textContent = `✅ Route Approved · ${editRows.length} stops + delivery + ${matchedStops.length} items`;
+          showToast(`✅ AppSheet updated — ${editRows.length} stops, delivery + ${matchedStops.length} items!`, 'green');
+        } else {
+          const err = JSON.stringify(itemsResult.body);
+          btn.textContent = `⚠️ Delivery items failed — click to retry`;
+          btn.disabled = false; routeApproved = false;
+          showToast(`⚠️ Delivery items failed (HTTP ${itemsResult.status}: ${err})`, 'amber');
+        }
+      };
+      if (deliveryId && matchedStops.length > 0) {
+        await doItems(deliveryId);
+      } else if (!deliveryId) {
+        // delivery record was added (HTTP 200) but findDeliveryId couldn't locate it yet
+        // This can happen if AppSheet hasn't indexed it — give it 3s and retry once
+        showToast('⏳ Delivery record created, locating ID...', 'amber');
+        await new Promise(r => setTimeout(r, 3000));
+        const retryId = await findDeliveryId(ROUTE_DATE, STAFF_IDS[driverName]);
+        if (retryId && matchedStops.length > 0) {
+          await doItems(retryId);
+        } else {
+          btn.textContent = `✅ Route Approved · ${editRows.length} stops + delivery record`;
+          showToast(`✅ AppSheet updated — ${editRows.length} stops + delivery record`, 'green');
+        }
+      } else {
+        btn.textContent = `✅ Route Approved · ${editRows.length} stops + delivery record`;
+        showToast(`✅ AppSheet updated — ${editRows.length} stops + delivery record (items skipped)`, 'green');
+      }
+    } else {
+      const errDetail = deliveryResult ? `HTTP ${deliveryResult.status}: ${JSON.stringify(deliveryResult.body)}` : 'no response';
+      console.error('Delivery record failed:', errDetail);
+      btn.textContent = `⚠️ Delivery failed — click to retry`;
+      btn.disabled = false;
+      routeApproved = false;
+      showToast(`⚠️ Delivery record failed (${errDetail}) — tap Approve again to retry`, 'amber');
+    }
+
+  } catch (err) {
+    console.error('AppSheet update error:', err);
+    showToast('❌ AppSheet update failed: ' + err.message, 'amber');
+    const btn = document.getElementById('approve-btn');
+    btn.textContent = '⚠️ Retry AppSheet Update';
+    btn.disabled = false;
+  }
+}
+
+async function createDeliveryRecord(routeDate, departTime, driverNameArg, orderIds) {
+  const DELIVERY_URL = `https://api.appsheet.com/api/v2/apps/${DELIVERY_APP_ID}/tables/delivery/Action`;
+  const HEADERS = { 'ApplicationAccessKey': DELIVERY_API_KEY, 'Content-Type': 'application/json' };
+  function toHHMMSS(timeStr) {
+    const [time, period] = timeStr.split(' ');
+    let [h, m] = time.split(':').map(Number);
+    if (period === 'PM' && h !== 12) h += 12;
+    if (period === 'AM' && h === 12) h = 0;
+    return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':00';
+  }
+  function nowTs() {
+    const d = new Date();
+    const p = n => String(n).padStart(2,'0');
+    return `${p(d.getMonth()+1)}/${p(d.getDate())}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
+  const STAFF_IDS   = { "Joe Alvarez": "4aa339f5", "Rene Jimenez": "9d3e9108", "Taner Genc": "68969327" };
+  // Taner uses Truck 1 (VEH1ABCD) on Thu/Fri/Sat; his personal car (VEH4ABCD) on other days
+  function getTanerVehicle(rd) {
+    const parts = rd.split('/'); // MM/DD/YYYY
+    const dow = new Date(Number(parts[2]), Number(parts[0])-1, Number(parts[1])).getDay();
+    return [4, 5, 6].includes(dow) ? 'VEH1ABCD' : 'VEH4ABCD'; // 4=Thu,5=Fri,6=Sat
+  }
+  const VEHICLE_IDS = { "Joe Alvarez": "VEH1ABCD", "Rene Jimenez": "VEH3ABCD" };
+  function getVehicleId(name, rd) {
+    if (name === "Taner Genc") return getTanerVehicle(rd);
+    return VEHICLE_IDS[name] || 'VEH1ABCD';
+  }
+  const staffId = STAFF_IDS[driverNameArg];
+  if (!staffId) { console.warn("No staff ID for driver:", driverNameArg); return null; }
+  const vehicleId = getVehicleId(driverNameArg, routeDate);
+  const ts = nowTs();
+  try {
+    const res = await fetch(DELIVERY_URL, {
+      method: 'POST', headers: HEADERS,
+      body: JSON.stringify({
+        Action: "Add", Properties: {},
+        Rows: [{
+          scheduled_date: routeDate, scheduled_time: toHHMMSS(departTime),
+          staff: staffId, vehicle: vehicleId,
+          actual_date: "", actual_time: "", status: "Scheduled",
+          load_tracking_type: "Orders",
+          orders: (orderIds || []).join(', '),
+          starting_mileage: "0", ending_mileage: "0", starting_cash: "0", ending_cash: "0",
+          created_by: 'joe@highridgehydroponics.com',
+          modified_by: 'joe@highridgehydroponics.com',
+          trigger: `RouteOptimizer | joe@highridgehydroponics.com | ${ts}`,
+        }]
+      })
+    });
+    const text = await res.text();
+    const body = text.trim() ? (() => { try { return JSON.parse(text); } catch(e) { return text; } })() : null;
+    console.log('createDeliveryRecord response:', res.status, body);
+    return { status: res.status, body };
+  } catch (err) { console.error('createDeliveryRecord error:', err); return { status: 0, body: err.message }; }
+}
+
+async function findDeliveryId(routeDate, staffId) {
+  const url = `https://api.appsheet.com/api/v2/apps/${DELIVERY_APP_ID}/tables/delivery/Action`;
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'ApplicationAccessKey': DELIVERY_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ Action: 'Find', Properties: {}, Rows: [] })
+    });
+    if (!resp.ok) { console.error('findDeliveryId HTTP error:', resp.status); return null; }
+    const text = await resp.text();
+    if (!text.trim()) { console.warn('findDeliveryId: empty response'); return null; }
+    const records = JSON.parse(text);
+    const matches = records.filter(r => r.scheduled_date === routeDate && r.staff === staffId);
+    console.log(`findDeliveryId: ${records.length} total records, ${matches.length} matching date=${routeDate} staff=${staffId}`);
+    if (!matches.length) return null;
+    matches.sort((a, b) => (Number(b._RowNumber) || 0) - (Number(a._RowNumber) || 0));
+    return matches[0].id;
+  } catch(err) { console.error('findDeliveryId error:', err); return null; }
+}
+
+async function createDeliveryItems(deliveryId, matchedStops) {
+  const url = `https://api.appsheet.com/api/v2/apps/${DELIVERY_APP_ID}/tables/delivery_item/Action`;
+  const HEADERS = { 'ApplicationAccessKey': DELIVERY_API_KEY, 'Content-Type': 'application/json' };
+  function nowTs() {
+    const d = new Date();
+    const p = n => String(n).padStart(2,'0');
+    return `${p(d.getMonth()+1)}/${p(d.getDate())}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
+  const ts = nowTs();
+  const rows = matchedStops.map(stop => ({
+    delivery: deliveryId,
+    order: stop.orderId,
+    status: 'Pending',
+    sorter: String(stop.sorter),
+    order_items: '',
+    reserve_1: '0',
+    created_by: 'joe@highridgehydroponics.com', created_at: ts,
+    modified_by: 'joe@highridgehydroponics.com', modified_at: ts,
+  }));
+  const resp = await fetch(url, {
+    method: 'POST', headers: HEADERS,
+    body: JSON.stringify({ Action: 'Add', Properties: {}, Rows: rows })
+  });
+  const text = await resp.text();
+  const body = text.trim() ? (() => { try { return JSON.parse(text); } catch(e) { return text; } })() : null;
+  console.log('createDeliveryItems response:', resp.status, body);
+  return { status: resp.status, body };
+}
+
+function decodePolyline(encoded) {
+  const pts = [];
+  let idx = 0, lat = 0, lng = 0;
+  while (idx < encoded.length) {
+    let b, shift = 0, result = 0;
+    do { b = encoded.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+    shift = 0; result = 0;
+    do { b = encoded.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+    pts.push([lat / 1e5, lng / 1e5]);
+  }
+  return pts;
+}
+
+// Decode and concatenate multiple encoded polylines into one flat points array.
+// Skips the duplicate junction point at each chunk boundary.
+function concatPolylines(encodedArr) {
+  if (!encodedArr || !encodedArr.length) return null;
+  const allPts = [];
+  for (const enc of encodedArr) {
+    const pts = decodePolyline(enc);
+    if (!pts.length) continue;
+    allPts.push(...(allPts.length ? pts.slice(1) : pts));
+  }
+  return allPts.length ? allPts : null;
+}
+
+function updateDirectionsBtn() {
+  document.getElementById('dir-btn').href = buildMapsUrl();
+}
+
+function onDriverChange() {
+  const idx = parseInt(document.getElementById('driver-select').value);
+  currentDriverIdx = idx;
+  const d = DRIVERS[idx];
+  driverName = d.name;
+  homeBase = { name: `${d.name} (Home)`, addr: d.addr, lat: d.lat, lng: d.lng };
+  homeVisible = true;
+  computeLegs();
+  updateStats(false);
+  buildDropdown();
+  render();
+  showToast(`🚗 Driver set to ${d.name}`, 'green');
+}
+
+function updateStats(trafficUsed) {
+  const totalMins = homeArrivalMins - departMinutes;
+  const h=Math.floor(totalMins/60), m=Math.round(totalMins%60);
+  document.getElementById('stat-time').textContent = `${h}h ${m}m`;
+  document.getElementById('stat-miles').textContent = totalMilesGlobal.toFixed(1);
+  document.getElementById('stat-home').textContent = minsToTime(Math.round(homeArrivalMins));
+  const homeCity = homeBase.addr ? homeBase.addr.split(',')[1]?.trim() || driverName : driverName;
+  document.getElementById('home-driver').textContent = homeCity;
+  const note = document.getElementById('traffic-note');
+  if (trafficUsed) {
+    note.innerHTML = '✓ live traffic data';
+    note.style.color = '#22c55e';
+  } else {
+    note.innerHTML = 'est. · no live traffic';
+    note.style.color = '#94a3b8';
+  }
+  updateHeaderCount();
+  updateDirectionsBtn();
+}
+
+function updateHeaderCount() {
+  document.getElementById('header-date').textContent =
+    `${DATE_PART} · ${stops.length} STOP${stops.length!==1?'S':''}`;
+}
+
+async function doRefresh() {
+  const raw = document.getElementById('depart-input').value.trim();
+  const parsed = timeToMins(raw);
+  if (!parsed) { showToast('⚠️ Try: 4:00 PM or 3:30 PM', 'amber'); return; }
+  departMinutes = parsed;
+  document.getElementById('spin-el').style.display = 'block';
+  document.getElementById('refresh-btn').disabled = true;
+  let trafficUsed = false;
+  try {
+    const timeout = new Promise(resolve => setTimeout(() => resolve(false), 9000));
+    trafficUsed = await Promise.race([refreshViaRoutesAPI(), timeout]);
+    if (!trafficUsed) fallbackRefresh();
+  } catch(e) {
+    fallbackRefresh();
+  } finally {
+    document.getElementById('spin-el').style.display = 'none';
+    document.getElementById('refresh-btn').disabled = false;
+  }
+  checkConstraints();
+  if (!trafficUsed) computeLegs(); // API sets legs[] directly when successful
+  updateStats(trafficUsed);
+  render();
+
+  // Home constraint auto-adjust: if a home-by time is set and driver arrives late,
+  // shift departure earlier by the exact overage and re-run once with live traffic.
+  if (homeConstraint) {
+    const constraintM = timeToMins(homeConstraint);
+    const arrivalM    = Math.round(homeArrivalMins);
+    if (constraintM !== null && arrivalM > constraintM) {
+      const overageMins = arrivalM - constraintM;
+      const newDepart   = departMinutes - overageMins;
+      if (newDepart > 0) {
+        const newDepartStr = minsToTime(newDepart);
+        document.getElementById('depart-input').value = newDepartStr;
+        showToast('Shifted depart to ' + newDepartStr + ' to meet home constraint', 'amber');
+        await doRefresh();
+        return;
+      }
+    }
+  }
+
+  showToast(trafficUsed
+    ? '✅ Live traffic · depart ' + minsToTime(departMinutes)
+    : '↺ Estimated · depart ' + minsToTime(departMinutes), trafficUsed ? 'green' : 'amber');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SHARED ROUTES API HELPER — auto-chunks large routes
+// Routes API allows max 27 total waypoints (origin + 25 intermediates + dest).
+// This helper transparently splits large stop lists into chunks of 24,
+// makes sequential API calls, and stitches results together so Refresh,
+// Compare, and Optimize all work correctly for any route size.
+// ═══════════════════════════════════════════════════════════════
+async function callRoutesAPIChunked(originAddr, destAddr, stopsArr, deptTime, fieldMask) {
+  const MAX_INT = 24; // keep total waypoints <=26 (safely under the 27-location limit)
+  const parseSecs = s => s ? parseInt(String(s).replace('s','')) : 0;
+
+  async function oneChunk(orig, dest, intermediates) {
+    const res = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': API_KEY,
+        'X-Goog-FieldMask': fieldMask
+      },
+      body: JSON.stringify({
+        origin:        { address: orig },
+        destination:   { address: dest },
+        intermediates: intermediates.map(a => ({ address: a })),
+        travelMode: 'DRIVE',
+        routingPreference: 'TRAFFIC_AWARE',
+        departureTime: deptTime,
+        computeAlternativeRoutes: false
+      })
+    });
+    const data = await res.json();
+    if (!data.routes?.[0]) return null;
+    return data.routes[0];
+  }
+
+  const addrs = [originAddr, ...stopsArr.map(s => s.addr), destAddr];
+  let totalSecs = 0, totalMeters = 0, allLegs = [], allPolylines = [];
+  let i = 0;
+  while (i < addrs.length - 1) {
+    const chunkEnd = Math.min(i + MAX_INT + 1, addrs.length - 1);
+    const chunk = await oneChunk(addrs[i], addrs[chunkEnd], addrs.slice(i + 1, chunkEnd));
+    if (!chunk) return null;
+    totalSecs   += parseSecs(chunk.duration);
+    totalMeters += chunk.distanceMeters || 0;
+    if (chunk.legs) allLegs.push(...chunk.legs);
+    if (chunk.polyline?.encodedPolyline) allPolylines.push(chunk.polyline.encodedPolyline);
+    i = chunkEnd;
+  }
+  return { totalSecs, totalMeters, legs: allLegs, polylines: allPolylines };
+}
+
+async function refreshViaRoutesAPI() {
+  if (!stops.length) return false;
+  const parseSecs = s => s ? parseInt(String(s).replace('s','')) : 0;
+  try {
+    const deptTime = (() => {
+      const d = new Date();
+      d.setHours(Math.floor(departMinutes / 60), Math.round(departMinutes % 60), 0, 0);
+      if (d.getTime() < Date.now() + 2 * 60 * 1000) d.setDate(d.getDate() + 1);
+      return d.toISOString();
+    })();
+    const result = await callRoutesAPIChunked(
+      farm.addr, homeBase.addr, stops, deptTime,
+      'routes.legs.duration,routes.legs.staticDuration,routes.legs.distanceMeters,routes.polyline.encodedPolyline'
+    );
+    if (!result || !result.legs.length) return false;
+    let cur = departMinutes, totalMeters = 0, hadTraffic = false;
+    stops.forEach((stop, i) => {
+      const leg = result.legs[i];
+      if (!leg) return;
+      const durSecs    = parseSecs(leg.duration);
+      const staticSecs = parseSecs(leg.staticDuration);
+      if (durSecs && staticSecs && durSecs !== staticSecs) hadTraffic = true;
+      const secs = durSecs || staticSecs;
+      cur += secs / 60;
+      stop.arrive = minsToTime(Math.round(cur));
+      cur += 5;
+      stop.depart = minsToTime(Math.round(cur));
+      totalMeters += leg.distanceMeters || 0;
+    });
+    const homeLeg = result.legs[stops.length];
+    if (homeLeg) {
+      const homeDur    = parseSecs(homeLeg.duration);
+      const homeStatic = parseSecs(homeLeg.staticDuration);
+      if (homeDur && homeStatic && homeDur !== homeStatic) hadTraffic = true;
+      homeArrivalMins = cur + (homeDur || homeStatic) / 60;
+      totalMeters += homeLeg.distanceMeters || 0;
+    }
+    totalMilesGlobal = totalMeters * 0.000621371;
+    legs = result.legs.map(leg => ({
+      distMiles: (leg.distanceMeters || 0) * 0.000621371,
+      driveMins: (parseSecs(leg.duration) || parseSecs(leg.staticDuration)) / 60
+    }));
+    roadPolylinePoints = result.polylines ? concatPolylines(result.polylines) : null;
+    return hadTraffic || !!(result.legs[0]?.duration);
+  } catch(e) {
+    return false;
+  }
+}
+
+function fallbackRefresh() {
+  const pts = homeVisible ? [farm, ...stops, homeBase] : [farm, ...stops];
+  let cur = departMinutes, totalMiles = 0;
+  for (let i=0; i<pts.length-1; i++) {
+    const dist = haversine(pts[i].lat, pts[i].lng, pts[i+1].lat, pts[i+1].lng);
+    totalMiles += dist;
+    cur += estimateDriveMins(dist);
+    if (i < stops.length) {
+      stops[i].arrive = minsToTime(Math.round(cur));
+      cur += 5;
+      stops[i].depart = minsToTime(Math.round(cur));
+    }
+  }
+  homeArrivalMins = cur;
+  totalMilesGlobal = totalMiles;
+}
+
+function checkConstraints() {
+  stops.forEach(s => {
+    if (!s.constraint) { s.warn=false; return; }
+    const arrM = timeToMins(s.arrive.replace('*',''));
+    const conM = timeToMins(s.constraint);
+    s.warn = arrM!==null && conM!==null && arrM>conM;
+  });
+  // Check home constraint
+  if (homeConstraint) {
+    const homeM = timeToMins(homeConstraint);
+    homeWarn = homeM!==null && Math.round(homeArrivalMins) > homeM;
+  } else { homeWarn = false; }
+
+  const late = stops.filter(s=>s.warn);
+  const allLate = [...late.map(s=>s.name + ' (by ' + s.constraint + ')'),
+                   ...(homeWarn ? ['Home — ' + driverName + ' (by ' + homeConstraint + ')'] : [])];
+  const bar = document.getElementById('warn-bar');
+  if (allLate.length) {
+    bar.style.display='block';
+    bar.innerHTML = '⚠️ <strong>Late arrival:</strong> ' + allLate.join(', ');
+  } else { bar.style.display='none'; }
+}
+
+let leafletMap = null;
+try {
+  leafletMap = L.map('map').setView([41.14,-73.38],11);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; OpenStreetMap &copy; CartoDB',subdomains:'abcd',maxZoom:19
+  }).addTo(leafletMap);
+} catch(e) {
+  console.warn('Leaflet map init failed:', e);
+}
+
+let stopMarkers=[], routeLine=null, farmMark=null, homeMark=null;
+
+function mkIcon(label,bg,fg,size=30) {
+  return L.divIcon({ html:`<div style="width:${size}px;height:${size}px;border-radius:50%;background:${bg};border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:${size>28?13:11}px;color:${fg};box-shadow:0 2px 8px rgba(0,0,0,.5)">${label}</div>`, className:'',iconSize:[size,size],iconAnchor:[size/2,size/2],popupAnchor:[0,-size/2-4] });
+}
+
+function drawMap() {
+  if (!leafletMap) return;
+  stopMarkers.forEach(m=>leafletMap.removeLayer(m));
+  stopMarkers=[];
+  if(routeLine) leafletMap.removeLayer(routeLine);
+  if(farmMark)  leafletMap.removeLayer(farmMark);
+  if(homeMark)  leafletMap.removeLayer(homeMark);
+
+  farmMark = L.marker([farm.lat,farm.lng],{icon:mkIcon('▶','#22c55e','#fff')})
+    .bindPopup(`<div class="popup-badge">START</div><div class="popup-name">Farm (HRH)</div><div class="popup-addr">${farm.addr}</div><div class="popup-t"><span>Depart</span>${minsToTime(departMinutes)}</div>`)
+    .addTo(leafletMap);
+  if(homeVisible) {
+    homeMark = L.marker([homeBase.lat,homeBase.lng],{icon:mkIcon('⌂','#475569','#fff',28)})
+      .bindPopup(`<div class="popup-badge">HOME</div><div class="popup-name">${driverName}</div><div class="popup-addr">${homeBase.addr}</div><div class="popup-t"><span>Est. Arrive</span>${minsToTime(Math.round(homeArrivalMins))}</div>`)
+      .addTo(leafletMap);
+  }
+
+  const ll = roadPolylinePoints
+    ? roadPolylinePoints
+    : (homeVisible ? [[farm.lat,farm.lng],...stops.map(s=>[s.lat,s.lng]),[homeBase.lat,homeBase.lng]] : [[farm.lat,farm.lng],...stops.map(s=>[s.lat,s.lng])]);
+  const lineStyle = roadPolylinePoints
+    ? {color:'#f59e0b',weight:4,opacity:.85}
+    : {color:'#f59e0b',weight:2,opacity:.5,dashArray:'8,6'};
+  routeLine = L.polyline(ll, lineStyle).addTo(leafletMap);
+
+  stops.forEach((s,i)=>{
+    const bg=s.warn?'#dc2626':'#f59e0b', fg=s.warn?'#fff':'#1a1d23';
+    const m = L.marker([s.lat,s.lng],{icon:mkIcon(s.num,bg,fg)});
+    m.bindPopup(`
+      <div class="popup-badge">Stop ${s.num}</div>
+      <div class="popup-name">${s.name}${s.warn?' ⚠️':''}</div>
+      <div class="popup-addr">${s.addr}</div>
+      <div class="popup-times">
+        <div class="popup-t"><span>Arrive</span>${s.arrive}</div>
+        <div class="popup-t"><span>Depart</span>${s.depart}</div>
+      </div>
+      ${legs[i] ? `<div class="popup-leg">↑ ${legs[i].distMiles.toFixed(1)} mi · ~${Math.round(legs[i].driveMins)} min from prev</div>` : ''}
+      ${s.constraint ? `<div class="popup-constraint">⏰ Must arrive by ${s.constraint}</div>` : ''}
+      <button class="popup-rm" onclick="removeStop(${i});leafletMap.closePopup()">✕ Remove Stop</button>`);
+    m.addTo(leafletMap);
+    stopMarkers.push(m);
+  });
+}
+
+function editStopNum(i) {
+  const rows = document.querySelectorAll('#stop-tbody tr.stop-row');
+  let targetRow = null;
+  rows.forEach(r => { if (parseInt(r.dataset.index) === i) targetRow = r; });
+  if (!targetRow) return;
+  const td = targetRow.querySelector('.td-num');
+  const minNum = STOP_NUM_OFFSET + 1;
+  const maxNum = STOP_NUM_OFFSET + stops.length;
+  td.innerHTML = `<input class="num-edit-input" type="number" min="${minNum}" max="${maxNum}" value="${stops[i].num}" style="width:52px">`;
+  const input = td.querySelector('input');
+  input.focus();
+  input.select();
+  let committed = false;
+  function commit() {
+    if (committed) return; committed = true;
+    const newNum = parseInt(input.value);
+    const newPos = newNum - STOP_NUM_OFFSET - 1; // 0-based position
+    const curPos = i;
+    if (!isNaN(newNum) && newNum >= minNum && newNum <= maxNum && newPos !== curPos) {
+      const moved = stops.splice(i, 1)[0];
+      stops.splice(newPos, 0, moved);
+      renumber(); computeLegs(); roadPolylinePoints = null; updateStats(false); render(); markRouteModified();
+      showToast('Moved ' + moved.name + ' to stop ' + stops[newPos].num, 'green');
+    } else {
+      renderTable();
+    }
+  }
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { committed = true; renderTable(); }
+  });
+  input.addEventListener('blur', commit);
+}
+
+function renderTable() {
+  const tbody = document.getElementById('stop-tbody');
+  tbody.innerHTML='';
+
+  const startTr = document.createElement('tr');
+  startTr.className='stop-row is-start';
+  startTr.innerHTML=`
+    <td class="td-num start-num">▶</td>
+    <td class="td-name start-name" colspan="3">
+      <div class="cname">Farm (HRH) — START</div>
+      <div class="caddr">${farm.addr}</div>
+    </td>
+    <td class="td-time"><span class="lbl">Depart</span>${minsToTime(departMinutes)}</td>
+    <td></td>`;
+  tbody.appendChild(startTr);
+
+  stops.forEach((s,i) => {
+    const legIdx = i;
+    const leg = legs[legIdx];
+    if (leg) {
+      const legTr = document.createElement('tr');
+      legTr.className='leg-row';
+      legTr.innerHTML=`<td colspan="6" class="leg-cell"><div class="leg-inner">
+        <div class="leg-line"></div>
+        <span class="leg-dist">${leg.distMiles.toFixed(1)} mi</span>
+        <span class="leg-time">· ~${Math.round(leg.driveMins)} min</span>
+        <div class="leg-line"></div>
+      </div></td>`;
+      tbody.appendChild(legTr);
+    }
+
+    const isLate = s.warn && s.constraint;
+    const tr = document.createElement('tr');
+    tr.className='stop-row';
+    tr.dataset.index=i;
+    tr.innerHTML=`
+      <td class="td-num" title="Click to change stop order" onclick="editStopNum(${i})">${s.num}</td>
+      <td class="td-name ${isLate?'warn-name':''}">
+        <div class="cname">${s.name}${s.warn?' ⚠️':''}</div>
+        <div class="caddr">${s.addr}</div>
+        ${s.constraint?`<div class="cbadge">⏰ by ${s.constraint}</div>`:''}
+      </td>
+      <td class="td-time ${isLate?'late':''}"><span class="lbl">Arrive</span>${s.arrive}</td>
+      <td class="td-time"><span class="lbl">Dep</span>${s.depart}</td>
+      <td><button class="icon-btn ${s.constraint?'has-constraint':''}" title="Time constraint" onclick="toggleConstraint(${i},event)">🕐</button></td>
+      <td><button class="icon-btn rm" title="Remove" onclick="removeStop(${i})">✕</button></td>`;
+
+    tr.addEventListener('drop',e=>{
+    });
+    tbody.appendChild(tr);
+
+    if(s.constOpen){
+      const ce=document.createElement('tr');
+      ce.className='constraint-row';
+      ce.innerHTML=`<td colspan="6" class="constraint-editor"><div class="ce-inner">
+        <span class="ce-label">Arrive by:</span>
+        <input class="ce-input" id="ce-input-${i}" type="text" placeholder="5:00 PM" value="${s.constraint||''}"
+          onkeydown="if(event.key==='Enter')setConstraint(${i})">
+        <button class="ce-btn ce-set" onclick="setConstraint(${i})">Set</button>
+        <button class="ce-btn ce-clr" onclick="clearConstraint(${i})">Clear</button>
+      </div></td>`;
+      tbody.appendChild(ce);
+      requestAnimationFrame(()=>{const el=document.getElementById(`ce-input-${i}`);if(el)el.focus();});
+    }
+  });
+
+  if(homeVisible) {
+  const homeLeg = legs[stops.length];
+  if(homeLeg){
+    const legTr=document.createElement('tr');
+    legTr.className='leg-row';
+    legTr.innerHTML=`<td colspan="6" class="leg-cell"><div class="leg-inner">
+      <div class="leg-line"></div>
+      <span class="leg-dist">${homeLeg.distMiles.toFixed(1)} mi</span>
+      <span class="leg-time">· ~${Math.round(homeLeg.driveMins)} min</span>
+      <div class="leg-line"></div>
+    </div></td>`;
+    tbody.appendChild(legTr);
+  }
+
+  const homeTr=document.createElement('tr');
+  homeTr.className='stop-row is-home';
+  homeTr.innerHTML=`
+    <td class="td-num home-num">⌂</td>
+    <td class="td-name ${homeWarn?'warn-name':'home-name'}" colspan="2">
+      <div class="cname">${driverName} — HOME${homeWarn?' ⚠️':''}</div>
+      <div class="caddr">${homeBase.addr}</div>
+      ${homeConstraint?`<div class="cbadge">⏰ home by ${homeConstraint}</div>`:''}
+    </td>
+    <td class="td-time ${homeWarn?'late':''}"><span class="lbl">Est. Arrive</span>${minsToTime(Math.round(homeArrivalMins))}</td>
+    <td><button class="icon-btn ${homeConstraint?'has-constraint':''}" title="Home arrival constraint" onclick="toggleHomeConstraint(event)">🕐</button></td>
+    <td><button class="icon-btn rm" title="Remove home from route" onclick="removeHome()">✕</button></td>`;
+  tbody.appendChild(homeTr);
+
+  // Home constraint editor row
+  if (homeConstOpen) {
+    const hce = document.createElement('tr');
+    hce.className = 'constraint-row';
+    hce.innerHTML = `<td colspan="6" class="constraint-editor"><div class="ce-inner">
+      <span class="ce-label">Home by:</span>
+      <input class="ce-input" id="home-ce-input" type="text" placeholder="6:00 PM" value="${homeConstraint||''}"
+        onkeydown="if(event.key==='Enter')setHomeConstraint()">
+      <button class="ce-btn ce-set" onclick="setHomeConstraint()">Set</button>
+      <button class="ce-btn ce-clr" onclick="clearHomeConstraint()">Clear</button>
+    </div></td>`;
+    tbody.appendChild(hce);
+    requestAnimationFrame(()=>{const el=document.getElementById('home-ce-input');if(el)el.focus();});
+  }
+  } // end if(homeVisible)
+}
+
+function toggleConstraint(i,e){e.stopPropagation();stops[i].constOpen=!stops[i].constOpen;renderTable();}
+function setConstraint(i){
+  const val=document.getElementById(`ce-input-${i}`)?.value.trim();
+  if(!val||!timeToMins(val)){showToast('⚠️ Use format: 5:00 PM','amber');return;}
+  stops[i].constraint=val;stops[i].constOpen=false;checkConstraints();render();
+  showToast(`⏰ Constraint set — ${stops[i].name} by ${val}`);
+}
+function clearConstraint(i){stops[i].constraint=null;stops[i].constOpen=false;stops[i].warn=false;checkConstraints();render();}
+function toggleHomeConstraint(e){e.stopPropagation();homeConstOpen=!homeConstOpen;renderTable();}
+function setHomeConstraint(){
+  const val=document.getElementById('home-ce-input')?.value.trim();
+  if(!val||!timeToMins(val)){showToast('Use format: 6:00 PM','amber');return;}
+  homeConstraint=val;homeConstOpen=false;checkConstraints();render();
+  showToast(`⏰ Home constraint set — back by ${val}`);
+}
+function clearHomeConstraint(){homeConstraint=null;homeConstOpen=false;homeWarn=false;checkConstraints();render();}
+function removeStop(i){removedStopNames[stops[i].addr]=stops[i].name;stops.splice(i,1);renumber();checkConstraints();computeLegs();roadPolylinePoints=null;updateStats(false);render();buildDropdown();}
+function removeHome(){homeVisible=false;roadPolylinePoints=null;computeLegs();updateStats(false);render();showToast('Home row removed','');}
+
+function buildDropdown(){
+  const sel=document.getElementById('stop-select');
+  while(sel.options.length>1)sel.remove(1);
+  const currentAddrs=new Set(stops.map(s=>s.addr));
+  const currentNames=new Set(stops.map(s=>(s.name||'').toLowerCase().trim()));
+
+  const sorted=[...geocache]
+    .map((gc,i)=>({gc,i}))
+    .filter(({gc})=>{
+      if(FIXED_NAMES.has(gc.name)) return false;
+      if(homeBase.addr && gc.addr===homeBase.addr) return false;
+      // Exclude already-on-route by address OR by customer name (prevents duplicate names)
+      if(currentAddrs.has(gc.addr)) return false;
+      if(currentNames.has((gc.name||'').toLowerCase().trim())) return false;
+      // Only show customers who have a Delivery order on ROUTE_DATE.
+      // Falls back to full cache if fetch hasn't finished yet.
+      if(todayOrdersLoaded && (todayOrderCustomers.size>0||todayOrderAddresses.size>0)){
+        const nameHit=todayOrderCustomers.has((gc.name||'').toLowerCase().trim());
+        const addrRaw=gc.addr; const addrShort=addrRaw.replace(/,?\s*USA\s*$/i,'').trim();
+        const addrHit=todayOrderAddresses.has(addrRaw)||todayOrderAddresses.has(addrShort);
+        return nameHit||addrHit;
+      }
+      return true;
+    })
+    .sort((a,b)=>a.gc.name.localeCompare(b.gc.name));
+
+  // Deduplicate by name (same customer may appear under multiple address variants in cache)
+  const seenNames=new Set();
+  sorted.forEach(({gc,i})=>{
+    const key=(gc.name||'').toLowerCase().trim();
+    if(seenNames.has(key)) return;
+    seenNames.add(key);
+    const opt=document.createElement('option');
+    opt.value=i; opt.textContent=removedStopNames[gc.addr]||gc.name;
+    sel.appendChild(opt);
+  });
+
+  const lbl=document.getElementById('add-stop-label');
+  if(lbl){
+    const n=sel.options.length-1;
+    lbl.textContent=todayOrdersLoaded
+      ?(n>0?`+ Add Stop (${n} with orders today)`:'+ Add Stop (none remaining)')
+      :'+ Add Stop (loading orders…)';
+  }
+}
+function onSelectChange(){
+  const sel=document.getElementById('stop-select');
+  document.getElementById('addr-preview').textContent=sel.value?geocache[parseInt(sel.value)].addr:'';
+}
+function addStop(){
+  const sel=document.getElementById('stop-select');
+  if(!sel.value){showToast('Select a customer first','amber');return;}
+  const gc=geocache[parseInt(sel.value)];
+  if(stops.find(s=>s.addr===gc.addr||(s.name||'').toLowerCase()===gc.name.toLowerCase())){showToast(`${gc.name} already on route`,'amber');return;}
+  stops.push({num:stops.length+1,name:gc.name,addr:gc.addr,lat:gc.lat,lng:gc.lng,arrive:'—',depart:'—',warn:false,constraint:null,constOpen:false});
+  sel.value=''; document.getElementById('addr-preview').textContent='';
+  renumber();computeLegs();fallbackRefresh();updateStats(false);render();buildDropdown();
+  showToast(`✅ ${gc.name} added — click Refresh for updated times`,'green');
+}
+
+function openGeocache(){
+  const tbody=document.getElementById('cache-tbody');
+  tbody.innerHTML='';
+  const sorted=[...geocache].sort((a,b)=>{
+    const af=FIXED_NAMES.has(a.name),bf=FIXED_NAMES.has(b.name);
+    if(af!==bf)return af?1:-1;
+    return a.name.localeCompare(b.name);
+  });
+  sorted.forEach(gc=>{
+    const i=geocache.indexOf(gc);
+    const onRoute=stops.some(s=>s.addr===gc.addr);
+    const isFixed=FIXED_NAMES.has(gc.name);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td class="ct-name">${gc.name}${isFixed?` <span style="font-size:10px;color:#64748b">(endpoint)</span>`:''}</td>
+      <td class="ct-addr">${gc.addr}</td>
+      <td class="ct-coord">${gc.lat.toFixed(5)}, ${gc.lng.toFixed(5)}</td>
+      <td class="ct-action">${isFixed?'<span style="color:#64748b">—</span>':onRoute?`<button class="cache-add-btn already" disabled>✓ On Route</button>`:`<button class="cache-add-btn" onclick="addFromCache(${i})">+ Add</button>`}</td>`;
+    tbody.appendChild(tr);
+  });
+  const custCount=geocache.filter(g=>!FIXED_NAMES.has(g.name)).length;
+  document.getElementById('cache-footer').textContent=`${Object.keys(cacheData.addresses).length} addresses cached · ${custCount} delivery customers`;
+  document.getElementById('geocache-modal').classList.add('open');
+}
+function addFromCache(i){
+  const gc=geocache[i];
+  if(stops.find(s=>s.addr===gc.addr||(s.name||'').toLowerCase()===gc.name.toLowerCase())){showToast(`${gc.name} already on route`,'amber');return;}
+  stops.push({num:stops.length+1,name:gc.name,addr:gc.addr,lat:gc.lat,lng:gc.lng,arrive:'—',depart:'—',warn:false,constraint:null,constOpen:false});
+  renumber();computeLegs();fallbackRefresh();updateStats(false);render();buildDropdown();
+  showToast(`✅ ${gc.name} added — click Refresh for live times`,'green');
+  openGeocache();
+}
+function closeGeocache(){document.getElementById('geocache-modal').classList.remove('open');}
+
+const STOP_COLORS=['#f59e0b','#fb923c','#34d399','#60a5fa','#a78bfa','#f472b6','#4ade80','#38bdf8'];
+function drawTimeline(){
+  const canvas=document.getElementById('timeline');
+  if(!canvas||!canvas.parentElement) return;
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-20, H=50;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  const segs=[];
+  legs.forEach((leg,i)=>{
+    segs.push({mins:leg.driveMins,color:'#12151a',border:'#1e2128'});
+    if(i<stops.length) segs.push({label:stops[i].name.split(' ')[0],mins:5,color:stops[i].warn?'#7f1d1d':STOP_COLORS[i%STOP_COLORS.length]});
+  });
+  const total=segs.reduce((s,g)=>s+g.mins,0);
+  if(!total)return;
+  const barY=18, barH=22;
+  ctx.font=`10px 'JetBrains Mono',monospace`;
+  ctx.fillStyle='#64748b';
+  ctx.fillText(minsToTime(departMinutes),0,13);
+  ctx.textAlign='right';
+  ctx.fillText(minsToTime(Math.round(homeArrivalMins)),W,13);
+  ctx.textAlign='left';
+  let x=0;
+  segs.forEach(seg=>{
+    const sw=Math.max((seg.mins/total)*W,1);
+    ctx.fillStyle=seg.color;
+    ctx.fillRect(x,barY,sw,barH);
+    if(seg.border){ctx.strokeStyle=seg.border;ctx.lineWidth=1;ctx.strokeRect(x,barY,sw,barH);}
+    if(seg.label&&sw>34){
+      ctx.fillStyle='#0e1014'; ctx.font=`bold 9px 'DM Sans',sans-serif`;
+      ctx.fillText(seg.label,x+4,barY+14);
+    }
+    x+=sw;
+  });
+}
+
+function render(){
+  drawMap();
+  renderTable();
+  drawTimeline();
+  updateDirectionsBtn();
+  updateHeaderCount();
+}
+
+// ════════════════════════════════════════════════════════════
+// COMPARE DRIVERS
+// ════════════════════════════════════════════════════════════
+async function runCompare() {
+  if (!stops.length) { showToast('Add stops first', 'amber'); return; }
+  const modal = document.getElementById('cmp-modal');
+  const body  = document.getElementById('cmp-body');
+  const foot  = document.getElementById('cmp-footer');
+  modal.classList.add('open');
+  foot.innerHTML = '';
+  body.innerHTML = '<div style="color:#94a3b8;font-size:13px">Fetching route data for all 3 drivers\u2026</div>';
+
+  // Build departure timestamp from current depart field
+  function makeTs(mins) {
+    const d = new Date();
+    d.setHours(Math.floor(mins/60), mins%60, 0, 0);
+    if (d.getTime() < Date.now() + 2*60*1000) d.setDate(d.getDate()+1);
+    return d.toISOString();
+  }
+  const depTs = makeTs(departMinutes);
+
+  // Run one API call per driver in parallel — same stops, different home destination
+  const results = await Promise.all(DRIVERS.map(async (driver) => {
+    try {
+      const parseSecs = s => s ? parseInt(String(s).replace('s','')) : 0;
+      const result = await callRoutesAPIChunked(
+        farm.addr, driver.addr, stops, depTs,
+        'routes.duration,routes.distanceMeters,routes.legs.duration,routes.legs.distanceMeters,routes.polyline.encodedPolyline'
+      );
+      if (!result) return { driver, error: 'No route returned' };
+      const { totalSecs, totalMeters, legs, polylines: encPolylines } = result;
+      const lastLeg = legs[legs.length - 1];
+      const lastLegSecs   = lastLeg ? parseSecs(lastLeg.duration   || '0s') : 0;
+      const lastLegMeters = lastLeg ? (lastLeg.distanceMeters || 0) : 0;
+      const arrivalMins = departMinutes + totalSecs/60 + stops.length * 5;
+      return { driver, totalSecs, totalMeters, lastLegSecs, lastLegMeters, arrivalMins, decodedPts: concatPolylines(encPolylines) };
+    } catch(e) {
+      return { driver, error: e.message };
+    }
+  }));
+
+  // Rank valid results by speed: fastest=green, middle=orange, slowest=red
+  const valid = results.filter(r => !r.error);
+  if (!valid.length) {
+    body.innerHTML = '<div style="color:#ef4444">Could not get route data. Check API key and stops.</div>';
+    foot.innerHTML = '<button class="hdr-btn ghost" onclick="closeCmp()">Close</button>';
+    return;
+  }
+  const sorted = [...valid].sort((a,b) => a.totalSecs - b.totalSecs);
+  const RANK_COLORS  = ['#22c55e', '#f59e0b', '#ef4444'];
+  const RANK_BG      = ['#052e12', '#1c1000', '#1c0000'];
+  const RANK_BORDER  = ['#16a34a', '#d97706', '#dc2626'];
+  const RANK_LABEL   = ['FASTEST', 'MIDDLE', 'SLOWEST'];
+  results.forEach(r => {
+    if (r.error) { r._rank = -1; r._color = '#64748b'; return; }
+    r._rank  = sorted.indexOf(r);
+    r._color = RANK_COLORS[r._rank] || '#64748b';
+  });
+
+  const cmpPolylinesByIdx = {};
+
+  // Build cards
+  const cards = results.map((r, idx) => {
+    if (r.error) return `
+      <div style="background:#1a1d23;border:1px solid #2a2d35;border-radius:10px;padding:14px 16px">
+        <div style="font-weight:700;font-size:15px;color:#ffffff;margin-bottom:4px">${r.driver.name}</div>
+        <div style="color:#ef4444;font-size:12px">Error: ${r.error}</div>
+      </div>`;
+    const rank   = r._rank;
+    const color  = r._color;
+    const bg     = RANK_BG[rank]     || '#1a1d23';
+    const border = RANK_BORDER[rank] || '#2a2d35';
+    const label  = RANK_LABEL[rank]  || '';
+    const dur = r.totalSecs + stops.length * 5 * 60;
+    const durMins = Math.round(dur / 60);
+    const miles = (r.totalMeters * 0.000621371).toFixed(1);
+    const lastMiles = (r.lastLegMeters * 0.000621371).toFixed(1);
+    const lastMins = Math.round(r.lastLegSecs / 60);
+    const h24 = Math.floor(r.arrivalMins/60)%24, mm = Math.round(r.arrivalMins%60);
+    const h12 = h24%12||12, ap = h24<12?'AM':'PM';
+    const arrStr = h12+':'+(mm<10?'0':'')+mm+' '+ap;
+    const city = r.driver.addr.split(',')[1]||'';
+    return `
+      <div data-cmp-idx="${idx}" onmouseenter="highlightCmpRoute(${idx})" onmouseleave="resetCmpRoutes()"
+        style="background:${bg};border:2px solid ${border};border-radius:10px;padding:14px 16px;position:relative;cursor:pointer;transition:box-shadow .15s">
+        <div style="position:absolute;top:10px;right:10px;background:${border};color:#fff;font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;padding:3px 7px;border-radius:3px;letter-spacing:1px">${label}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+          <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color};flex-shrink:0"></span>
+          <span style="font-weight:700;font-size:15px;color:#ffffff">${r.driver.name}</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:12px;padding-left:20px">${city}</div>
+        <div style="display:grid;gap:8px">
+          <div>
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-family:'JetBrains Mono',monospace;margin-bottom:2px">&#x23F1; Route Duration</div>
+            <div style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${color}">${Math.floor(durMins/60)}h ${durMins%60}m</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div>
+              <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-family:'JetBrains Mono',monospace;margin-bottom:2px">&#x1F4CF; Miles</div>
+              <div style="font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#cbd5e1">${miles} mi</div>
+            </div>
+            <div>
+              <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-family:'JetBrains Mono',monospace;margin-bottom:2px">&#x1F3C1; Home</div>
+              <div style="font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#cbd5e1">${arrStr}</div>
+            </div>
+          </div>
+          <div style="border-top:1px solid #1e2128;padding-top:8px;font-size:11px;color:#64748b;font-family:'JetBrains Mono',monospace">
+            Last leg: ${lastMiles} mi &nbsp;&#xB7;&nbsp; ~${lastMins} min
+          </div>
+        </div>
+      </div>`;
+  });
+
+  body.innerHTML = `
+    <div style="font-size:11px;color:#64748b;font-family:'JetBrains Mono',monospace;margin-bottom:14px;text-transform:uppercase;letter-spacing:1px">
+      Departing ${minsToTime(departMinutes)} &nbsp;&#xB7;&nbsp; ${stops.length} stop${stops.length!==1?'s':''} &nbsp;&#xB7;&nbsp; Traffic-aware
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">${cards.join('')}</div>`;
+
+  // Draw color-coded routes on map
+  cmpLayers.forEach(l => leafletMap.removeLayer(l));
+  cmpLayers = [];
+  if (routeLine) routeLine.setStyle({ opacity: 0 });
+
+  results.forEach((r, idx) => {
+    if (r.error) return;
+    const color = r._color;
+    const pts = r.decodedPts
+               || [[farm.lat, farm.lng], ...stops.map(s=>[s.lat,s.lng]), [r.driver.lat, r.driver.lng]];
+    const pl = L.polyline(pts, { color, weight: 4, opacity: 0.75 }).addTo(leafletMap);
+    cmpPolylinesByIdx[idx] = pl;
+    cmpLayers.push(pl);
+    const hm = L.marker([r.driver.lat, r.driver.lng], {
+      icon: mkIcon('⌂', color, '#fff', 26)
+    }).bindPopup('<div class="popup-badge" style="color:'+color+'">HOME — '+r.driver.name+'</div><div class="popup-addr">'+r.driver.addr+'</div>').addTo(leafletMap);
+    cmpLayers.push(hm);
+  });
+
+  // Hover: bring hovered route to front, dim others
+  window._cmpPolylinesByIdx = cmpPolylinesByIdx;
+  window.highlightCmpRoute = function(idx) {
+    Object.entries(window._cmpPolylinesByIdx).forEach(([i, pl]) => {
+      if (parseInt(i) === idx) { pl.setStyle({ weight: 7, opacity: 1 }); pl.bringToFront(); }
+      else { pl.setStyle({ weight: 3, opacity: 0.2 }); }
+    });
+  };
+  window.resetCmpRoutes = function() {
+    Object.values(window._cmpPolylinesByIdx).forEach(pl => pl.setStyle({ weight: 4, opacity: 0.75 }));
+  };
+
+  foot.innerHTML = '<button class="hdr-btn ghost" onclick="closeCmp()">Close</button>';
+}
+
+function closeCmp() {
+  document.getElementById('cmp-modal').classList.remove('open');
+  // Remove compare layers and restore main route line
+  cmpLayers.forEach(l => leafletMap.removeLayer(l));
+  cmpLayers = [];
+  if (routeLine) routeLine.setStyle({ opacity: roadPolylinePoints ? 0.85 : 0.5 });
+}
+
+// ════════════════════════════════════════════════════════════
+// REORDER STOPS: find shortest-distance stop order
+// Brute force for <=8 stops (guaranteed optimal), nearest-neighbor for more
+// ════════════════════════════════════════════════════════════
+function reorderStops() {
+  if (stops.length < 2) { showToast('Need at least 2 stops to reorder', 'amber'); return; }
+
+  function totalDist(order) {
+    const all = [farm, ...order, homeBase];
+    let d = 0;
+    for (let i = 0; i < all.length - 1; i++)
+      d += haversine(all[i].lat, all[i].lng, all[i+1].lat, all[i+1].lng);
+    return d;
+  }
+
+  function permutations(arr) {
+    if (arr.length <= 1) return [[...arr]];
+    const out = [];
+    arr.forEach((item, i) => {
+      const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
+      permutations(rest).forEach(p => out.push([item, ...p]));
+    });
+    return out;
+  }
+
+  const oldDist = totalDist(stops);
+  let bestOrder = [...stops];
+
+  if (stops.length <= 8) {
+    // Brute force — guaranteed optimal
+    let bestDist = Infinity;
+    permutations([...stops]).forEach(perm => {
+      const d = totalDist(perm);
+      if (d < bestDist) { bestDist = d; bestOrder = perm; }
+    });
+  } else {
+    // Nearest-neighbor heuristic for larger routes
+    const remaining = [...stops];
+    bestOrder = [];
+    let cur = farm;
+    while (remaining.length) {
+      let nearIdx = 0, nearDist = Infinity;
+      remaining.forEach((s, i) => {
+        const d = haversine(cur.lat, cur.lng, s.lat, s.lng);
+        if (d < nearDist) { nearDist = d; nearIdx = i; }
+      });
+      bestOrder.push(remaining.splice(nearIdx, 1)[0]);
+      cur = bestOrder[bestOrder.length - 1];
+    }
+  }
+
+  const newDist = totalDist(bestOrder);
+  const saved = oldDist - newDist;
+
+  stops.length = 0;
+  bestOrder.forEach(s => stops.push(s));
+  renumber();
+  roadPolylinePoints = null;
+
+  if (saved > 0.05) {
+    showToast(`🔀 Reordered — saves ~${saved.toFixed(1)} mi vs previous order`, 'green');
+  } else {
+    showToast('🔀 Already in shortest-distance order', 'green');
+  }
+
+  doRefresh(); // recalculates legs, times, map, and road polyline
+}
+
+// ════════════════════════════════════════════════════════════
+// OPTIMIZE: find best departure time
+// ════════════════════════════════════════════════════════════
+async function runOptimize() {
+  if (!stops.length) { showToast('Add stops first', 'amber'); return; }
+  const modal = document.getElementById('opt-modal');
+  const body  = document.getElementById('opt-body');
+  const foot  = document.getElementById('opt-footer');
+  modal.classList.add('open');
+  foot.innerHTML = '';
+
+  // Fixed window: 10 AM to 6 PM, every hour (9 slots x 3 drivers = 27 calls)
+  const candidates = [];
+  for (let h = 10; h <= 18; h++) candidates.push(h * 60);
+  const totalCalls = candidates.length * DRIVERS.length;
+
+  body.innerHTML = '<div style="color:#94a3b8;font-size:13px">Scanning 10 AM – 6 PM across all 3 drivers (' + totalCalls + ' calls)…</div>' +
+    '<div style="margin-top:10px;font-size:11px;color:#64748b;font-family:\'JetBrains Mono\',monospace" id="opt-prog">0 / ' + totalCalls + ' complete</div>';
+
+  function makeTs(mins) {
+    const d = new Date();
+    d.setHours(Math.floor(mins/60), mins%60, 0, 0);
+    if (d.getTime() < Date.now() + 2*60*1000) d.setDate(d.getDate()+1);
+    return d.toISOString();
+  }
+
+  // matrix[driverIdx][hourIdx] = secs or null
+  const matrix = DRIVERS.map(() => new Array(candidates.length).fill(null));
+  let completed = 0;
+
+  for (let hi = 0; hi < candidates.length; hi++) {
+    const mins = candidates[hi];
+    const hourResults = await Promise.all(DRIVERS.map(async (driver, di) => {
+      try {
+        const result = await callRoutesAPIChunked(
+          farm.addr, driver.addr, stops, makeTs(mins), 'routes.duration,routes.distanceMeters'
+        );
+        if (!result) return null;
+        return result.totalSecs;
+      } catch(e) { return null; }
+    }));
+    hourResults.forEach((secs, di) => { matrix[di][hi] = secs; });
+    completed += DRIVERS.length;
+    const prog = document.getElementById('opt-prog');
+    if (prog) prog.textContent = completed + ' / ' + totalCalls + ' complete';
+  }
+
+  // Find global best
+  let bestSecs = Infinity, bestDi = 0, bestHi = 0;
+  matrix.forEach((row, di) => row.forEach((secs, hi) => {
+    if (secs !== null && secs < bestSecs) {
+      if (candidates[hi] + Math.round(secs / 60) <= 18 * 60) {
+        bestSecs = secs; bestDi = di; bestHi = hi;
+      }
+    }
+  }));
+
+  if (bestSecs === Infinity) {
+    body.innerHTML = '<div style="color:#ef4444;font-size:13px">Could not retrieve traffic data. Check your API key.</div>';
+    foot.innerHTML = '<button class="hdr-btn ghost" onclick="closeOpt()">Close</button>';
+    return;
+  }
+
+  const bestMins   = candidates[bestHi];
+  const bestDriver = DRIVERS[bestDi];
+  const hourMins   = candidates.map((_,hi) => Math.min(...matrix.map(row => row[hi] ?? Infinity)));
+  const overallWorst   = Math.max(...hourMins.filter(isFinite));
+  const savingsMins = Math.round((overallWorst - bestSecs) / 60);
+
+  const DRIVER_COLORS = ['#3b82f6', '#a855f7', '#f43f5e'];
+
+  const headerCells = DRIVERS.map((d,di) =>
+    '<th style="padding:6px 10px;font-family:\'JetBrains Mono\',monospace;font-size:10px;color:' + DRIVER_COLORS[di] + ';text-transform:uppercase;letter-spacing:.5px;text-align:center;border-bottom:1px solid #1e2128">' +
+    d.name.split(' ')[0] + '</th>'
+  ).join('');
+
+  const rows = candidates.map((mins, hi) => {
+    const hourSecs  = matrix.map(row => row[hi]);
+    const validSecs = hourSecs.filter(s => s !== null);
+    const rowMin    = validSecs.length ? Math.min(...validSecs) : null;
+    const rowMax    = validSecs.length ? Math.max(...validSecs) : null;
+    const isOptHour = hi === bestHi;
+    const cells = DRIVERS.map((d, di) => {
+      const secs = matrix[di][hi];
+      if (secs === null) return '<td style="text-align:center;color:#374151;font-size:11px">—</td>';
+      const durM = Math.round(secs / 60);
+      if (mins + durM > 18 * 60) return '<td style="text-align:center;color:#374151;font-size:11px">—</td>';
+      const label = Math.floor(durM/60) + 'h ' + (durM%60) + 'm';
+      const isGlobalBest = (di === bestDi && hi === bestHi);
+      const isFastest    = secs === rowMin;
+      const isSlowest    = secs === rowMax && rowMin !== rowMax;
+      let bg = 'transparent', color = '#94a3b8', fw = '400';
+      if (isGlobalBest)    { bg = '#1a2e0e'; color = '#86efac'; fw = '700'; }
+      else if (isFastest)  { color = '#22c55e'; fw = '600'; }
+      else if (isSlowest)  { color = '#ef4444'; }
+      return '<td style="text-align:center;background:' + bg + ';color:' + color + ';font-weight:' + fw + ';font-family:\'JetBrains Mono\',monospace;font-size:11px;padding:5px 8px;border-radius:4px">' +
+        label + (isGlobalBest ? ' ⚡' : '') + '</td>';
+    }).join('');
+    return '<tr style="border-bottom:1px solid #12151a' + (isOptHour ? ';background:#0e1a06' : '') + '">' +
+      '<td style="padding:5px 8px;font-family:\'JetBrains Mono\',monospace;font-size:11px;color:' + (isOptHour ? '#fcd34d' : '#64748b') + ';white-space:nowrap">' + minsToTime(mins) + '</td>' +
+      cells + '</tr>';
+  }).join('');
+
+  body.innerHTML =
+    '<div style="background:#0e1014;border:1px solid #f59e0b;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:16px">' +
+      '<div style="font-size:28px">⚡</div>' +
+      '<div>' +
+        '<div style="font-size:10px;color:#94a3b8;font-family:\'JetBrains Mono\',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Best Departure + Driver</div>' +
+        '<div style="font-size:22px;font-weight:700;color:#fcd34d;font-family:\'JetBrains Mono\',monospace;line-height:1">' + minsToTime(bestMins) + ' — ' + bestDriver.name + '</div>' +
+        '<div style="font-size:11px;color:#22c55e;margin-top:4px;font-weight:600">Saves ~' + savingsMins + ' min vs worst option</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="font-size:10px;color:#64748b;font-family:\'JetBrains Mono\',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Duration by hour &amp; driver (⚡ = global best)</div>' +
+    '<table style="width:100%;border-collapse:collapse">' +
+      '<thead><tr style="border-bottom:1px solid #1e2128">' +
+        '<th style="padding:6px 8px;font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#64748b;text-align:left;border-bottom:1px solid #1e2128">Depart</th>' +
+        headerCells +
+      '</tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table>';
+
+  foot.innerHTML =
+    '<button class="hdr-btn ghost" onclick="closeOpt()">Close</button>' +
+    '<button class="hdr-btn amber" onclick="applyOptimal(' + bestMins + ',' + bestDi + ')">Apply ' + minsToTime(bestMins) + ' · ' + bestDriver.name + '</button>';
+}
+function applyOptimal(mins, driverIdx) {
+  document.getElementById('depart-input').value = minsToTime(mins);
+  if (driverIdx !== undefined) {
+    const sel = document.getElementById('driver-select');
+    if (sel) { sel.value = driverIdx; sel.dispatchEvent(new Event('change')); }
+  }
+  closeOpt();
+  doRefresh();
+}
+
+function closeOpt() {
+  document.getElementById('opt-modal').classList.remove('open');
+}
+
+// Geocode driver home addresses so markers land on the right spot,
+// then kick off the normal init. Falls back to hardcoded coords if API fails.
+(async function initWithGeocode() {
+  await Promise.all(DRIVERS.map(async (driver, i) => {
+    try {
+      const res = await fetch(
+        'https://maps.googleapis.com/maps/api/geocode/json?address=' +
+        encodeURIComponent(driver.addr) + '&key=' + API_KEY
+      );
+      const data = await res.json();
+      if (data.results && data.results[0]) {
+        const loc = data.results[0].geometry.location;
+        DRIVERS[i].lat = loc.lat;
+        DRIVERS[i].lng = loc.lng;
+      }
+    } catch(e) { /* keep hardcoded fallback */ }
+  }));
+  // Sync homeBase with corrected coords for the selected driver
+  const sel = document.getElementById('driver-select');
+  if (sel) sel.value = currentDriverIdx;
+  const idx = currentDriverIdx;
+  const d = DRIVERS[idx];
+  homeBase = { name: d.name + ' (Home)', addr: d.addr, lat: d.lat, lng: d.lng };
+  computeLegs();
+  checkConstraints();
+  buildDropdown();
+  updateStats(false);
+  render();
+  doRefresh();
+})();
+</script>
+</body>
+</html>
