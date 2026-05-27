@@ -8,11 +8,11 @@
 # Force re-run (if dashboard already exists): set FORCE_RUN=1 in the workflow_dispatch inputs
 #
 # Required Secrets (Settings -> Secrets and variables -> Actions -> New repository secret):
-#   APPSHEET_APP_ID      bea55701-8006-4581-a791-19a75092943f
-#   APPSHEET_API_KEY     V2-f4zl4-pDmwB-IZ9zh-t6ari-vPhJu-FmAwJ-WQ46U-LIUqO
-#   DELIVERY_APP_ID      f57f33e9-2515-46d3-8394-168d7e834ded
-#   DELIVERY_API_KEY     V2-pFgDb-yYzyx-qffc2-gm2Nd-6hoHq-cjOXi-i3CQt-nRkVZ
-#   GMAP_API_KEY         AIzaSyB3Q0zYJdBfi2gmkETa7z7cWqrntPkHN7A
+#   APPSHEET_APP_ID      <your-appsheet-app-id>
+#   APPSHEET_API_KEY     <your-appsheet-api-key>
+#   DELIVERY_APP_ID      <your-delivery-app-id>
+#   DELIVERY_API_KEY     <your-delivery-api-key>
+#   GMAP_API_KEY         <your-google-maps-api-key>
 #   GCP_SA_KEY_JSON      (paste the full contents of hrh-route-optimizer-*.json here)
 #   ANTHROPIC_API_KEY    (optional - enables Claude address-lookup fallback)
 #   EMAIL_USER           highridgehydroponics@gmail.com
