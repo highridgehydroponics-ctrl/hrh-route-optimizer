@@ -33,6 +33,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+from email.header import Header
 from urllib.parse import quote as urlquote
 
 import requests
@@ -548,10 +549,9 @@ def send_email(subject: str, text_body: str, attachment_path: str = None, dashbo
     msg = MIMEMultipart("mixed")
     msg["From"]    = EMAIL_USER
     msg["To"]      = EMAIL_TO
-    msg["Subject"] = subject
-    msg.attach(MIMEText(html_body, "html"))
-
-    if attachment_path and os.path.exists(attachment_path):
+        msg["Subject"] = Header(subject, "utf-8")
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
+        if attachment_path and os.path.exists(attachment_path):
         with open(attachment_path, "rb") as f:
             part = MIMEBase("application", "octet-stream")
             part.set_payload(f.read())
