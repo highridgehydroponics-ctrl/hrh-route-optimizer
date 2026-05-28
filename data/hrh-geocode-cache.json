@@ -43,6 +43,126 @@
     "2992 Fairfield Ave, Bridgeport, CT 06605, USA": {
       "lat": 41.1561025,
       "lng": -73.2287475
+    },
+    "258 Westchester Ave, Pound Ridge, NY 10576, USA": {
+      "lat": 41.2093916,
+      "lng": -73.5751452
+    },
+    "The Saugatuck Grain Building, 46 Railroad Pl, Westport, CT 06880, USA": {
+      "lat": 41.1191568,
+      "lng": -73.37129209999999
+    },
+    "194 Perry Ave, Norwalk, CT 06850, USA": {
+      "lat": 41.1511837,
+      "lng": -73.4467693
+    },
+    "12 Forest St, New Canaan, CT 06840, USA": {
+      "lat": 41.1481786,
+      "lng": -73.4922252
+    },
+    "35 Church St, Greenwich, CT 06830, USA": {
+      "lat": 41.033575,
+      "lng": -73.6261908
+    },
+    "195 Oenoke Ridge, New Canaan, CT 06840, USA": {
+      "lat": 41.1551185,
+      "lng": -73.4993217
+    },
+    "70 N Main St, Norwalk, CT 06854, USA": {
+      "lat": 41.1011403,
+      "lng": -73.4198914
+    },
+    "27 Powers Ct, Westport, CT 06880, USA": {
+      "lat": 41.1421084,
+      "lng": -73.35474500000001
+    },
+    "89 Rowayton Ave, Norwalk, CT 06853": {
+      "lat": 41.0640341,
+      "lng": -73.4443337
+    },
+    "3 Big Shop Ln, Ridgefield, CT 06877": {
+      "lat": 41.2825327,
+      "lng": -73.4974094
+    },
+    "65 Research Dr, Stamford, CT 06906, USA": {
+      "lat": 41.0768498,
+      "lng": -73.5189737
+    },
+    "5 Grove St, Ridgefield, CT 06877": {
+      "lat": 41.2841259,
+      "lng": -73.4951493
+    },
+    "7 Sconset Square, Westport, CT 06880, USA": {
+      "lat": 41.1418522,
+      "lng": -73.3591053
+    },
+    "90 Post Rd e level, Westport, CT 06880, USA": {
+      "lat": 41.1384504,
+      "lng": -73.3661478
+    },
+    "5 River Rd, Wilton, CT 06897": {
+      "lat": 41.1912823,
+      "lng": -73.4316489
+    },
+    "6 Wilton Rd, Westport, CT 06880, USA": {
+      "lat": 41.1410996,
+      "lng": -73.36458619999999
+    },
+    "7 Main St. Redding, CT 06896, USA": {
+      "lat": 41.25758560000001,
+      "lng": -73.4276896
+    },
+    "575b Riverside Ave, Westport, CT 06880, USA": {
+      "lat": 41.1216974,
+      "lng": -73.3701052
+    },
+    "150 Main St, Westport, CT 06880, USA": {
+      "lat": 41.14357810000001,
+      "lng": -73.36154400000001
+    },
+    "323 Main St, Westport, CT 06880, USA": {
+      "lat": 41.150115,
+      "lng": -73.3624548
+    },
+    "30 Charles St, Westport, CT 06880, USA": {
+      "lat": 41.120156,
+      "lng": -73.3719186
+    },
+    "68 Washington St, Norwalk, CT 06854": {
+      "lat": 41.0988694,
+      "lng": -73.4185925
+    },
+    "229 Elm St, New Canaan, CT 06840, USA": {
+      "lat": 41.1461722,
+      "lng": -73.49806439999999
+    },
+    "439 Main St, Ridgefield, CT 06877": {
+      "lat": 41.282337,
+      "lng": -73.4993908
+    },
+    "7 River St, Norwalk, CT 06850, USA": {
+      "lat": 41.1181426,
+      "lng": -73.4139288
+    },
+    "23 Bailey Ave, Ridgefield, CT 06877, USA": {
+      "lat": 41.2818643,
+      "lng": -73.4973607
+    },
+    "730 Post Rd E, Westport, CT 06880, USA": {
+      "lat": 41.137106,
+      "lng": -73.34015169999999
+    },
+    "268 W Cedar St, Norwalk, CT 06854, USA": {
+      "lat": 41.1031473,
+      "lng": -73.4422455
+    },
+    "20 Barry Ave, Ridgefield, CT 06877, USA": {
+      "lat": 41.2825941,
+      "lng": -73.50652079999999
+    },
+    "52 Calf Pasture Beach Rd, Norwalk, CT 06855, USA": {
+      "lat": 41.084312,
+      "lng": -73.3981213
     }
   },
   "customers": {
@@ -54,6 +174,36 @@
     "Marketplace Shelton": "811 Bridgeport Ave, Shelton, CT 06484, USA",
     "Marketplace Newtown": "32 Church Hill Rd, Newtown, CT 06470, USA",
     "Brooklawn Country Club": "500 Algonquin Rd, Fairfield, CT 06825, USA",
-    "The Tasty Yolk BPT": "2992 Fairfield Ave, Bridgeport, CT 06605, USA"
+    "The Tasty Yolk BPT": "2992 Fairfield Ave, Bridgeport, CT 06605, USA",
+    "Inn at Pound Ridge": "258 Westchester Ave, Pound Ridge, NY 10576, USA",
+    "Allium Eatery": "The Saugatuck Grain Building, 46 Railroad Pl, Westport, CT 06880, USA",
+    "Tavern At GrayBarns": "194 Perry Ave, Norwalk, CT 06850, USA",
+    "Farmers Table": "12 Forest St, New Canaan, CT 06840, USA",
+    "Townhouse": "35 Church St, Greenwich, CT 06830, USA",
+    "Roger Sherman Inn": "195 Oenoke Ridge, New Canaan, CT 06840, USA",
+    "Ilios Greek Taverna & Bar": "70 N Main St, Norwalk, CT 06854, USA",
+    "Gabriele's Italian Steakhouse": "27 Powers Ct, Westport, CT 06880, USA",
+    "Rowayton Seafood": "89 Rowayton Ave, Norwalk, CT 06853",
+    "Terra Sole": "3 Big Shop Ln, Ridgefield, CT 06877",
+    "Marcia Selden Catering": "65 Research Dr, Stamford, CT 06906, USA",
+    "Gallo": "5 Grove St, Ridgefield, CT 06877",
+    "Casa Me": "7 Sconset Square, Westport, CT 06880, USA",
+    "Massi Co": "90 Post Rd e level, Westport, CT 06880, USA",
+    "Cactus Rose": "5 River Rd, Wilton, CT 06897",
+    "Oko Westport": "6 Wilton Rd, Westport, CT 06880, USA",
+    "Uncorked Redding": "7 Main St. Redding, CT 06896, USA",
+    "The Whelk": "575b Riverside Ave, Westport, CT 06880, USA",
+    "Nomade": "150 Main St, Westport, CT 06880, USA",
+    "Hudson Malone": "323 Main St, Westport, CT 06880, USA",
+    "Zucca Gastrobar": "30 Charles St, Westport, CT 06880, USA",
+    "Maama By Cheese and Bread": "68 Washington St, Norwalk, CT 06854",
+    "Walter Stewart's Market": "229 Elm St, New Canaan, CT 06840, USA",
+    "Tequila Escape": "439 Main St, Ridgefield, CT 06877",
+    "Greer Southern Table": "7 River St, Norwalk, CT 06850, USA",
+    "Baileys Backyard": "23 Bailey Ave, Ridgefield, CT 06877, USA",
+    "Double L Market": "730 Post Rd E, Westport, CT 06880, USA",
+    "Glenn Marcus": "268 W Cedar St, Norwalk, CT 06854, USA",
+    "Laura Zandri": "20 Barry Ave, Ridgefield, CT 06877, USA",
+    "Sunset Grille": "52 Calf Pasture Beach Rd, Norwalk, CT 06855, USA"
   }
 }
