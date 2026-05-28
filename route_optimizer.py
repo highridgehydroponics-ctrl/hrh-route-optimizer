@@ -523,7 +523,7 @@ def generate_dashboard(
 # Email
 # 
 
-def send_email(subject, body, text_body=None, attachment_path=None):
+def send_email(subject, body=None, text_body=None, attachment_path=None, dashboard_url=None):
     """Send route summary email via Gmail SMTP.
     Requires EMAIL_USER and EMAIL_PASSWORD secrets.
     EMAIL_PASSWORD must be a Gmail App Password (16-char code),
