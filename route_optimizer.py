@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-HRH Daily Route Optimizer Ã¢ÂÂ GitHub Actions Version
+HRH Daily Route Optimizer \u2014 GitHub Actions Version
 Runs daily at 3pm ET (7pm UTC) MonÃ¢ÂÂSat to optimize tomorrow's delivery route.
 
 Replicates the full Cowork skill logic:
@@ -23,7 +23,7 @@ Required GitHub Secrets (set in repo Settings Ã¢ÂÂ Secrets Ã¢ÂÂ 
   GMAP_API_KEY          AIzaSyB3Q0z...
   GCP_SA_KEY_JSON       (full JSON content of the service account key file)
   EMAIL_USER            highridgehydroponics@gmail.com
-  EMAIL_PASSWORD        (Gmail app password Ã¢ÂÂ NOT your account password)
+  EMAIL_PASSWORD        (Gmail app password \u2014 NOT your account password)
 """
 
 import os, sys, json, time, base64, math, re, traceback, smtplib
@@ -46,11 +46,11 @@ from cryptography.hazmat.primitives.asymmetric import padding
 
 EASTERN = ZoneInfo("America/New_York")
 
-# AppSheet Ã¢ÂÂ Orders app
+# AppSheet \u2014 Orders app
 AS_APP_ID  = os.environ["APPSHEET_APP_ID"]
 AS_API_KEY = os.environ["APPSHEET_API_KEY"]
 
-# AppSheet Ã¢ÂÂ Deliveries app
+# AppSheet \u2014 Deliveries app
 DL_APP_ID  = os.environ["DELIVERY_APP_ID"]
 DL_API_KEY = os.environ["DELIVERY_API_KEY"]
 
@@ -58,7 +58,7 @@ DL_API_KEY = os.environ["DELIVERY_API_KEY"]
 GMAP_KEY          = os.environ["GMAP_API_KEY"]
 GCP_SA_KEY_JSON   = os.environ["GCP_SA_KEY_JSON"]   # full JSON of service account key
 
-# Claude API (optional Ã¢ÂÂ used for address resolution fallback)
+# Claude API (optional \u2014 used for address resolution fallback)
 ANTHROPIC_KEY     = os.environ.get("ANTHROPIC_API_KEY", "")
 
 # Email
@@ -265,7 +265,7 @@ def geocode_address(address: str, cache: dict):
 
     # Validate bounding box
     if not (LAT_MIN <= lat <= LAT_MAX and LNG_MIN <= lng <= LNG_MAX):
-        print(f"  Ã¢ÂÂ Ã¯Â¸Â  Suspicious geocode for '{address}': ({lat}, {lng}) Ã¢ÂÂ out of bounding box")
+        print(f"  Ã¢ÂÂ Ã¯Â¸Â  Suspicious geocode for '{address}': ({lat}, {lng}) \u2014 out of bounding box")
         return None, None
     if haversine_mi(FARM_LAT, FARM_LNG, lat, lng) > MAX_DIST_MI:
         print(f"  Ã¢ÂÂ Ã¯Â¸Â  Geocode too far from farm ({haversine_mi(FARM_LAT, FARM_LNG, lat, lng):.1f} mi) for '{address}'")
@@ -294,7 +294,7 @@ def resolve_address_via_claude(customer_name: str) -> str | None:
                     "role": "user",
                     "content": (
                         f"What is the full street address for '{customer_name}' in Connecticut "
-                        f"(likely Fairfield County Ã¢ÂÂ Westport, New Canaan, Darien, Greenwich, Stamford, Norwalk area)? "
+                        f"(likely Fairfield County \u2014 Westport, New Canaan, Darien, Greenwich, Stamford, Norwalk area)? "
                         f"Reply with ONLY the address string, nothing else. If unknown, reply: UNKNOWN"
                     ),
                 }],
@@ -436,13 +436,13 @@ def generate_dashboard(
     depart_mins  = t2m(depart_time)
     home_mins    = t2m(home_arrival)
 
-    # Build stops JS array Ã¢ÂÂ ensure constOpen is always present
+    # Build stops JS array \u2014 ensure constOpen is always present
     stops_for_js = []
     for s in stops:
         stops_for_js.append({
             "num":         s.get("num", 0),
             "name":        s.get("name", ""),
-            "orderNum":    s.get("orderNum"),      # null or "Ã¢ÂÂ"
+            "orderNum":    s.get("orderNum"),      # null or "\u2014"
             "addr":        s.get("addr", ""),
             "lat":         s.get("lat", 0),
             "lng":         s.get("lng", 0),
@@ -511,7 +511,7 @@ def generate_dashboard(
         html,
     )
 
-    # Fix 5: Python escape artifact Ã¢ÂÂ \\! Ã¢ÂÂ \!
+    # Fix 5: Python escape artifact \u2014 \\! Ã¢ÂÂ \!
     raw = html.encode("utf-8")
     raw = raw.replace(bytes([0x5C, 0x21]), bytes([0x21]))
     html = raw.decode("utf-8")
@@ -542,7 +542,7 @@ def send_email(subject: str, text_body: str, attachment_path: str = None, dashbo
     overflow-x:auto;">{text_body}</pre>
   {btn_html}
   <p style="color:#94a3b8;font-size:11px;margin-top:24px;">
-    HRH Route Optimizer ÃÂ· {datetime.now(EASTERN).strftime('%m/%d/%Y %I:%M %p ET')}
+    HRH Route Optimizer \u00b7 {datetime.now(EASTERN).strftime('%m/%d/%Y %I:%M %p ET')}
   </p>
 </body></html>"""
 
@@ -581,14 +581,14 @@ def main():
     day_of_week  = tomorrow_et.strftime("%A")
 
     print(f"\n{'='*60}")
-    print(f"HRH Route Optimizer Ã¢ÂÂ {tomorrow_str} ({day_of_week})")
+    print(f"HRH Route Optimizer \u2014 {tomorrow_str} ({day_of_week})")
     print(f"{'='*60}\n")
 
     # Avoid re-running if a dashboard for tomorrow already exists (idempotency)
     slug_check = f"route-{tomorrow_et.strftime('%Y-%m-%d')}"
     existing = [f for f in os.listdir(DOCS_DIR) if slug_check in f] if os.path.isdir(DOCS_DIR) else []
     if existing and os.environ.get("FORCE_RUN", "").lower() not in ("1", "true", "yes"):
-        print(f"  Ã¢ÂÂ¹Ã¯Â¸Â  Dashboard already exists for {tomorrow_str} ({existing[0]}) Ã¢ÂÂ skipping.")
+        print(f"  Ã¢ÂÂ¹Ã¯Â¸Â  Dashboard already exists for {tomorrow_str} ({existing[0]}) \u2014 skipping.")
         print("     Set FORCE_RUN=1 to override.")
         return
 
@@ -604,18 +604,18 @@ def main():
         driver_name = same_day[0]["driver"]
         depart_time = same_day[0]["depart_time"]
         driver_slug = same_day[0].get("driver_slug", same_day[0]["driver"].split()[0].lower())
-        print(f"Step 1: Driver from history Ã¢ÂÂ {driver_name} @ {depart_time} ({same_day[0]['date']})")
+        print(f"Step 1: Driver from history \u2014 {driver_name} @ {depart_time} ({same_day[0]['date']})")
     else:
         fb = FALLBACK_SCHEDULE.get(day_of_week)
         if not fb:
-            msg = f"No deliveries scheduled for {day_of_week} Ã¢ÂÂ exiting."
+            msg = f"No deliveries scheduled for {day_of_week} \u2014 exiting."
             print(f"  Ã¢ÂÂ¹Ã¯Â¸Â  {msg}")
-            send_email(f"HRH Route Ã¢ÂÂ No Deliveries {tomorrow_str}", msg)
+            send_email(f"HRH Route \u2014 No Deliveries {tomorrow_str}", msg)
             return
         driver_name = fb["driver"]
         depart_time = fb["depart"]
         driver_slug = fb["slug"]
-        print(f"Step 1: Driver from fallback Ã¢ÂÂ {driver_name} @ {depart_time}")
+        print(f"Step 1: Driver from fallback \u2014 {driver_name} @ {depart_time}")
 
     # Ã¢ÂÂÃ¢ÂÂ Step 2: Fetch orders from AppSheet Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     print(f"\nStep 2: Fetching orders for {tomorrow_str}...")
@@ -627,7 +627,7 @@ def main():
     if not orders:
         msg = f"No delivery orders found for {day_of_week} {tomorrow_str}."
         print(f"  Ã¢ÂÂ¹Ã¯Â¸Â  {msg}")
-        send_email(f"HRH Route Ã¢ÂÂ No Deliveries {tomorrow_str}", msg)
+        send_email(f"HRH Route \u2014 No Deliveries {tomorrow_str}", msg)
         return
 
     print(f"  Found {len(orders)} order(s)")
@@ -663,7 +663,7 @@ def main():
     if day_of_week == "Saturday" and fm_pickups:
         nc_on_route = any("new canaan farmers" in s["name"].lower() for s in raw_stops)
         if not nc_on_route:
-            print("  Ã¢ÂÂ Ã¯Â¸Â  Glenn/Stacy/Eric have orders but New Canaan FM not on route Ã¢ÂÂ confirm with Joe")
+            print("  Ã¢ÂÂ Ã¯Â¸Â  Glenn/Stacy/Eric have orders but New Canaan FM not on route \u2014 confirm with Joe")
 
     # Ã¢ÂÂÃ¢ÂÂ Step 2.5a: Fill missing addresses Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     print("\nStep 2.5a: Resolving missing addresses...")
@@ -708,14 +708,14 @@ def main():
 
         # No address found
         skipped_stops.append(s["name"])
-        print(f"  Ã¢ÂÂ Ã¯Â¸Â  No address found Ã¢ÂÂ skipping: {s['name']}")
+        print(f"  Ã¢ÂÂ Ã¯Â¸Â  No address found \u2014 skipping: {s['name']}")
 
     raw_stops = [s for s in raw_stops if s["addr"]]
 
     # Ã¢ÂÂÃ¢ÂÂ Brooklawn Country Club departure override Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     if any("brooklawn" in s["name"].lower() for s in raw_stops):
         depart_time = "1:00 PM"
-        print(f"\n  Ã°ÂÂÂÃ¯Â¸Â  Brooklawn Country Club on route Ã¢ÂÂ overriding depart Ã¢ÂÂ 1:00 PM")
+        print(f"\n  Ã°ÂÂÂÃ¯Â¸Â  Brooklawn Country Club on route \u2014 overriding depart Ã¢ÂÂ 1:00 PM")
 
     if not raw_stops:
         print("  Ã¢ÂÂ No routable stops after address resolution.")
@@ -751,10 +751,10 @@ def main():
             valid_stops.append(s)
         else:
             skipped_stops.append(s["name"])
-            print(f"  Ã¢ÂÂ Ã¯Â¸Â  Geocode failed Ã¢ÂÂ skipping: {s['name']} ({s['addr']})")
+            print(f"  Ã¢ÂÂ Ã¯Â¸Â  Geocode failed \u2014 skipping: {s['name']} ({s['addr']})")
 
     if not valid_stops:
-        print("  Ã¢ÂÂ No geocodable stops Ã¢ÂÂ exiting.")
+        print("  Ã¢ÂÂ No geocodable stops \u2014 exiting.")
         return
 
     print(f"  Ã¢ÂÂ {len(valid_stops)} stops geocoded")
@@ -814,7 +814,7 @@ def main():
                 "arrivalLocation": {"latitude": FARM_LAT, "longitude": FARM_LNG},
                 "duration": "300s",
             }],
-            "label": "Farm Ã¢ÂÂ Unload",
+            "label": "Farm \u2014 Unload",
         })
         for nc_i in nc_area_indices:
             precedence_rules.append({
@@ -872,18 +872,18 @@ def main():
         start_utc  = visit.get("startTime", "")
         arrive_mins = utc_iso_to_et_mins(start_utc) if start_utc else depart_mins
 
-        # Identify if this is the Farm Ã¢ÂÂ Unload internal stop
+        # Identify if this is the Farm \u2014 Unload internal stop
         is_farm_unload = (ship_idx == farm_unload_shipment_idx)
 
         if is_farm_unload:
             stop_data = {
-                "name":    "Farm Ã¢ÂÂ Unload",
+                "name":    "Farm \u2014 Unload",
                 "addr":    FARM_ADDR,
                 "lat":     FARM_LAT,
                 "lng":     FARM_LNG,
                 "id":      "",
                 "rowNum":  "",
-                "orderNum": "Ã¢ÂÂ",
+                "orderNum": "\u2014",
             }
             dwell_mins = 5
         else:
@@ -895,7 +895,7 @@ def main():
             dwell_mins = 330 if is_wfm else 5    # 5h 30min or 5 min
             num_regular_stops += 1
 
-        seq_num = len([s for s in ordered_stops if s.get("orderNum") != "Ã¢ÂÂ"]) + 1 if not is_farm_unload else 0
+        seq_num = len([s for s in ordered_stops if s.get("orderNum") != "\u2014"]) + 1 if not is_farm_unload else 0
         depart_stop_mins = arrive_mins + dwell_mins
 
         ordered_stops.append({
@@ -936,7 +936,7 @@ def main():
                     "warn": False, "constraint": None,
                 })
     elif wfm_pickups and not wfm_on_route:
-        print("  Ã¢ÂÂ Ã¯Â¸Â  WFM pickup customers present but WFM not on route Ã¢ÂÂ flag for Joe")
+        print("  Ã¢ÂÂ Ã¯Â¸Â  WFM pickup customers present but WFM not on route \u2014 flag for Joe")
 
     # Ã¢ÂÂÃ¢ÂÂ Add Saturday FM pickup sub-entries Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     if day_of_week == "Saturday" and fm_pickups:
@@ -956,21 +956,21 @@ def main():
     # Ã¢ÂÂÃ¢ÂÂ Step 6.5: Westport canonical loop Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     ordered_stops = apply_westport_loop(ordered_stops)
 
-    print(f"  Ã¢ÂÂ {num_regular_stops} stops ÃÂ· ~{total_miles:.1f} mi ÃÂ· "
+    print(f"  Ã¢ÂÂ {num_regular_stops} stops \u00b7 ~{total_miles:.1f} mi \u00b7 "
           f"depart {depart_time} Ã¢ÂÂ home ~{home_arrival_str}")
 
     # Ã¢ÂÂÃ¢ÂÂ Step 7: Google Maps directions link Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     map_addrs = [FARM_ADDR] + [
         s["addr"] for s in ordered_stops
-        if s.get("orderNum") != "Ã¢ÂÂ" and s.get("addr")
+        if s.get("orderNum") != "\u2014" and s.get("addr")
         and "(pickup @" not in s["name"]
     ]
     maps_url = "https://www.google.com/maps/dir/" + "/".join(urlquote(a) for a in map_addrs)
 
     # Ã¢ÂÂÃ¢ÂÂ Step 8: Generate dashboard Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     print("\nStep 8: Generating dashboard...")
-    n_stops_label = sum(1 for s in ordered_stops if s.get("orderNum") != "Ã¢ÂÂ" and "(pickup @" not in s["name"])
-    date_label    = f"{tomorrow_et.strftime('%a').upper()} {tomorrow_et.strftime('%b %d').upper()} ÃÂ· {n_stops_label} STOPS"
+    n_stops_label = sum(1 for s in ordered_stops if s.get("orderNum") != "\u2014" and "(pickup @" not in s["name"])
+    date_label    = f"{tomorrow_et.strftime('%a').upper()} {tomorrow_et.strftime('%b %d').upper()} \u00b7 {n_stops_label} STOPS"
 
     dashboard_html = generate_dashboard(
         stops        = ordered_stops,
@@ -999,10 +999,10 @@ def main():
     print("\nStep 8.8: Writing to AppSheet...")
     now_str = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
 
-    # 8.8a Ã¢ÂÂ Stop numbers
+    # 8.8a \u2014 Stop numbers
     stop_rows = []
     for s in ordered_stops:
-        if s.get("orderNum") == "Ã¢ÂÂ":
+        if s.get("orderNum") == "\u2014":
             continue
         if "(pickup @" in s.get("name", ""):
             continue
@@ -1015,16 +1015,16 @@ def main():
 
     if stop_rows:
         ok = as_edit(AS_APP_ID, AS_API_KEY, "order", stop_rows)
-        print(f"  {'Ã¢ÂÂ' if ok else 'Ã¢ÂÂ'} Stop numbers written Ã¢ÂÂ {len(stop_rows)} order(s)")
+        print(f"  {'Ã¢ÂÂ' if ok else 'Ã¢ÂÂ'} Stop numbers written \u2014 {len(stop_rows)} order(s)")
     else:
         print("  Ã¢ÂÂ Ã¯Â¸Â  No stop rows to write (missing rowNum/id?)")
 
-    # 8.8b Ã¢ÂÂ Create delivery record
+    # 8.8b \u2014 Create delivery record
     dt_obj = datetime.strptime(depart_time, "%I:%M %p")
     sched_time_str = dt_obj.strftime("%H:%M:%S")
     order_ids = ", ".join(
         s["id"] for s in ordered_stops
-        if s.get("orderNum") != "Ã¢ÂÂ"
+        if s.get("orderNum") != "\u2014"
         and "(pickup @" not in s.get("name", "")
         and s.get("id")
     )
@@ -1057,7 +1057,7 @@ def main():
     ok = as_add(DL_APP_ID, DL_API_KEY, "delivery", [delivery_row])
     print(f"  {'Ã¢ÂÂ' if ok else 'Ã¢ÂÂ'} Delivery record created")
 
-    # 8.8c Ã¢ÂÂ Find new delivery record ID
+    # 8.8c \u2014 Find new delivery record ID
     time.sleep(2)
     delivery_records = as_find(DL_APP_ID, DL_API_KEY, "delivery",
         f'FILTER(delivery, AND([scheduled_date] = "{tomorrow_str}", [staff] = "{staff_id}"))')
@@ -1070,12 +1070,12 @@ def main():
     else:
         print("  Ã¢ÂÂ Ã¯Â¸Â  Could not retrieve delivery record ID")
 
-    # 8.8d Ã¢ÂÂ Create delivery items
+    # 8.8d \u2014 Create delivery items
     if delivery_id:
         item_rows = []
         sorter = 1
         for s in ordered_stops:
-            if s.get("orderNum") == "Ã¢ÂÂ":
+            if s.get("orderNum") == "\u2014":
                 continue
             if "(pickup @" in s.get("name", ""):
                 continue
@@ -1125,8 +1125,8 @@ def main():
     ]
 
     for s in ordered_stops:
-        if s.get("orderNum") == "Ã¢ÂÂ":
-            summary_lines.append(f"  Ã¢ÂÂ {s['name']}  ({s.get('arrive','')})")
+        if s.get("orderNum") == "\u2014":
+            summary_lines.append(f"  \u2014 {s['name']}  ({s.get('arrive','')})")
         elif "(pickup @" in s.get("name", ""):
             summary_lines.append(f"    Ã¢ÂÂ {s['name']}")
         else:
@@ -1145,7 +1145,7 @@ def main():
     print("\nSending email...")
     dashboard_url = f"{PAGES_URL}/{dashboard_filename}" if PAGES_URL else None
     send_email(
-        subject       = f"Ã°ÂÂÂ HRH Route Ã¢ÂÂ {day_of_week} {tomorrow_str} ÃÂ· {driver_name} ÃÂ· {num_regular_stops} stops",
+        subject       = f"Ã°ÂÂÂ HRH Route \u2014 {day_of_week} {tomorrow_str} \u00b7 {driver_name} \u00b7 {num_regular_stops} stops",
         text_body     = summary_text,
         attachment_path = dashboard_path,
         dashboard_url = dashboard_url,
@@ -1154,7 +1154,7 @@ def main():
     # Ã¢ÂÂÃ¢ÂÂ Final summary Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     print(f"\n{'='*60}")
     print(f"Ã¢ÂÂ Route optimizer complete!")
-    print(f"   {day_of_week} {tomorrow_str} ÃÂ· {driver_name} ÃÂ· {num_regular_stops} stops ÃÂ· ~{total_miles:.1f} mi")
+    print(f"   {day_of_week} {tomorrow_str} \u00b7 {driver_name} \u00b7 {num_regular_stops} stops \u00b7 ~{total_miles:.1f} mi")
     print(f"   Depart {depart_time} Ã¢ÂÂ Home ~{home_arrival_str}")
     if dashboard_url:
         print(f"   Dashboard: {dashboard_url}")
