@@ -523,56 +523,37 @@ def generate_dashboard(
 # Email
 # 
 
-def send_email(subject: str, text_body: str, attachment_path: str = None, dashboard_url: str = None):
-    btn_html = ""
-    if dashboard_url:
-        btn_html = (
-            f'<p style="margin-top:16px;">'
-            f'<a href="{dashboard_url}" style="background:#22d3ee;color:#0f172a;'
-            f'font-weight:700;padding:10px 20px;border-radius:6px;text-decoration:none;">'
-            f'View Live Dashboard </a></p>'
-        )
-
-    html_body = f"""
-<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  color:#1e293b;max-width:640px;margin:0 auto;padding:24px;">
-  <h2 style="color:#0f766e;margin-bottom:4px;"> HRH Route Ready</h2>
-  <pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;
-    padding:16px;font-size:13px;line-height:1.6;white-space:pre-wrap;
-    overflow-x:auto;">{text_body}</pre>
-  {btn_html}
-  <p style="color:#94a3b8;font-size:11px;margin-top:24px;">
-    HRH Route Optimizer \u00b7 {datetime.now(EASTERN).strftime('%m/%d/%Y %I:%M %p ET')}
-  </p>
-</body></html>"""
-
-    msg = MIMEMultipart("mixed")
-    msg["From"]    = EMAIL_USER
-    msg["To"]      = EMAIL_TO
-    msg["Subject"] = Header(subject, "utf-8")
-    msg.attach(MIMEText(html_body, "html", "utf-8"))
-    if attachment_path and os.path.exists(attachment_path):
-        with open(attachment_path, "rb") as f:
-            part = MIMEBase("application", "octet-stream")
-            part.set_payload(f.read())
-            encoders.encode_base64(part)
-            fname = os.path.basename(attachment_path)
-            part.add_header("Content-Disposition", f'attachment; filename="{fname}"')
-            msg.attach(part)
-
+def send_email(subject, body):
+    """Send route summary email via Gmail SMTP.
+    Requires EMAIL_USER and EMAIL_PASSWORD secrets.
+    EMAIL_PASSWORD must be a Gmail App Password (16-char code),
+    NOT your regular Gmail account password.
+    Generate one at: myaccount.google.com/apppasswords
+    """
+    import traceback
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-            smtp.login(EMAIL_USER, EMAIL_PASSWORD)
-            smtp.sendmail(EMAIL_USER, EMAIL_TO, msg.as_string())
-        print(f"   Email sent  {EMAIL_TO}")
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = EMAIL_USER
+        msg["To"] = EMAIL_TO
+        msg.attach(MIMEText(body, "html"))
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(EMAIL_USER, EMAIL_PASSWORD)
+            server.sendmail(EMAIL_USER, [EMAIL_TO], msg.as_string())
+        print(f"Email sent successfully to {EMAIL_TO}")
+    except smtplib.SMTPAuthenticationError as e:
+        print(
+            "SMTP auth failed. EMAIL_PASSWORD must be a Gmail App Password "
+            "(16-char code from myaccount.google.com/apppasswords), "
+            f"not your regular Gmail password. Error: {e}"
+        )
+        traceback.print_exc()
+    except smtplib.SMTPException as e:
+        print(f"SMTP error sending email: {e}")
+        traceback.print_exc()
     except Exception as e:
-        print(f"    Email failed: {e}")
-
-
-# 
-# Main
-# 
-
+        print(f"Unexpected error sending email: {e}")
+        traceback.print_exc()
 def main():
     #  Step 0: Determine tomorrow 
     now_et       = datetime.now(EASTERN)
@@ -916,6 +897,40 @@ def main():
     # Home arrival = vehicleEndTime (GMPRO accounts for drive home + all stop durations)
     if vehicle_end:
         home_mins = utc_iso_to_et_mins(vehicle_end)
+        # Home by 6 PM rule: if projected arrival > 6 PM, bump depart earlier
+        HOME_BY_MINS = 18 * 60  # 6:00 PM = 1080 min
+        if home_mins > HOME_BY_MINS:
+            overage = home_mins - HOME_BY_MINS
+            new_depart = max(6 * 60, depart_mins - overage)  # floor at 6 AM
+            if new_depart < depart_mins:
+                print(f"Home by 6 PM rule: bumping depart {depart_mins}->{new_depart} min")
+                depart_mins = new_depart
+                _h, _m = divmod(depart_mins, 60)
+                _h12 = _h % 12 or 12
+                _ampm = "AM" if _h < 12 else "PM"
+                depart_time = f"{_h12}:{_m:02d} {_ampm}"
+                try:
+                    import pytz as _pytz, copy as _copy
+                    from datetime import datetime as _dt
+                    _et = _pytz.timezone("US/Eastern")
+                    _dp = route_date.split("/")
+                    _nd = _dt(int(_dp[2]), int(_dp[0]), int(_dp[1]), depart_mins // 60, depart_mins % 60)
+                    _ut = _et.localize(_nd).utctimetuple()
+                    _su = (f"{_ut.tm_year:04d}-{_ut.tm_mon:02d}-{_ut.tm_mday:02d}"
+                           f"T{_ut.tm_hour:02d}:{_ut.tm_min:02d}:00Z")
+                    _p2 = _copy.deepcopy(payload)
+                    _p2["model"]["vehicles"][0]["startTimeWindows"] = [{"startTime": _su}]
+                    _r2 = call_gmpro(_p2)
+                    if _r2 and _r2.get("routes"):
+                        _rt2 = _r2["routes"][0]
+                        _mt2 = _rt2.get("metrics", {})
+                        total_miles = _mt2.get("travelDistanceMeters", 0) * 0.000621371
+                        _ve2 = _rt2.get("vehicleEndTime")
+                        if _ve2:
+                            home_mins = utc_iso_to_et_mins(_ve2)
+                            print(f"Home by 6 PM: new arrival {home_mins // 60}:{home_mins % 60:02d}")
+                except Exception as _e6pm:
+                    print(f"Home-by-6PM retry failed: {_e6pm}")
     else:
         home_mins = depart_mins + 180   # fallback
 
