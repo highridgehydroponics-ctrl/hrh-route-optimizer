@@ -523,7 +523,7 @@ def generate_dashboard(
 # Email
 # 
 
-def send_email(subject, body, text_body=None):
+def send_email(subject, body, text_body=None, attachment_path=None):
     """Send route summary email via Gmail SMTP.
     Requires EMAIL_USER and EMAIL_PASSWORD secrets.
     EMAIL_PASSWORD must be a Gmail App Password (16-char code),
@@ -537,6 +537,19 @@ def send_email(subject, body, text_body=None):
         msg["From"] = EMAIL_USER
         msg["To"] = EMAIL_TO
         msg.attach(MIMEText(body, "html"))
+        if text_body:
+            msg.attach(MIMEText(text_body, "plain"))
+        if attachment_path:
+            import os
+            from email.mime.base import MIMEBase
+            from email import encoders
+            if os.path.exists(attachment_path):
+                with open(attachment_path, "rb") as f:
+                    part = MIMEBase("application", "octet-stream")
+                    part.set_payload(f.read())
+                encoders.encode_base64(part)
+                part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(attachment_path)}")
+                msg.attach(part)
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(EMAIL_USER, EMAIL_PASSWORD)
             server.sendmail(EMAIL_USER, [EMAIL_TO], msg.as_string())
