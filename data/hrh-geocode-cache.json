@@ -163,6 +163,10 @@
     "52 Calf Pasture Beach Rd, Norwalk, CT 06855, USA": {
       "lat": 41.084312,
       "lng": -73.3981213
+    },
+    "244 Elm St, New Canaan, CT 06840, USA": {
+      "lat": 41.1451239,
+      "lng": -73.4978746
     }
   },
   "customers": {
@@ -204,6 +208,7 @@
     "Double L Market": "730 Post Rd E, Westport, CT 06880, USA",
     "Glenn Marcus": "268 W Cedar St, Norwalk, CT 06854, USA",
     "Laura Zandri": "20 Barry Ave, Ridgefield, CT 06877, USA",
-    "Sunset Grille": "52 Calf Pasture Beach Rd, Norwalk, CT 06855, USA"
+    "Sunset Grille": "52 Calf Pasture Beach Rd, Norwalk, CT 06855, USA",
+    "New Canaan Farmers Market": "244 Elm St, New Canaan, CT 06840, USA"
   }
 }

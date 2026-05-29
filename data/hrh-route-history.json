@@ -71,6 +71,15 @@
       "depart_time": "10:39 AM",
       "stops": 30,
       "miles": 128.0
+    },
+    {
+      "date": "05/30/2026",
+      "day_of_week": "Saturday",
+      "driver": "Taner Genc",
+      "driver_slug": "taner",
+      "depart_time": "8:30 AM",
+      "stops": 2,
+      "miles": 72.7
     }
   ]
 }
